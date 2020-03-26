@@ -1,0 +1,46 @@
+env: dev
+log: /dev/null
+
+server:
+  addr: 0.0.0.0:10000
+
+cache:
+  file: data.db
+  ttl: 900
+
+blackholeip: 127.0.0.1
+
+dns:
+  - 1.1.1.1:53
+  - 1.0.0.1:53
+  - 8.8.8.8:53
+  - 8.8.4.4:53
+
+blacklistip:
+  - 127.0.0.1
+  - 10.0.0.0/24
+
+rules:
+  - rul: example.com
+    type: none
+    ip4: 10.0.0.1
+
+  - rul: test.com
+    type: none
+    ip4: 10.0.0.1
+    ip6: '::1'
+
+  - rul: demo.com
+    type: none
+
+  - rul: '.*\.demo\.com'
+    type: regexp
+    ip4: 10.0.0.1
+
+  - rul: '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com'
+    type: regexp
+    ip4: '$1.$2.$3.$4'
+
+  - rul: 'ex?mple.*'
+    type: query
+    ip4: 10.0.0.1
