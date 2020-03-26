@@ -6,4 +6,4 @@ run:
 
 .PHONY: build
 build:
-	@bash build/build.sh
+	@bash $(RD)/build/build.sh
