@@ -21,26 +21,26 @@ blacklistip:
   - 10.0.0.0/24
 
 rules:
-  - rul: example.com
+  - rule: example.com
     type: none
     ip4: 10.0.0.1
 
-  - rul: test.com
+  - rule: test.com
     type: none
     ip4: 10.0.0.1
     ip6: '::1'
 
-  - rul: demo.com
+  - rule: demo.com
     type: none
 
-  - rul: '.*\.demo\.com'
+  - rule: '.*\.demo\.com'
     type: regexp
     ip4: 10.0.0.1
 
-  - rul: '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com'
+  - rule: '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com'
     type: regexp
     ip4: '$1.$2.$3.$4'
 
-  - rul: 'ex?mple.*'
+  - rule: 'ex?mple.*'
     type: query
     ip4: 10.0.0.1
