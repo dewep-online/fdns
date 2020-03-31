@@ -31,7 +31,7 @@ type Cache struct {
 }
 
 type Rule struct {
-	Rule string `yaml:"rul"`
+	Rule string `yaml:"rule"`
 	Type string `yaml:"type"`
 	IP4  string `yaml:"ip4"`
 	IP6  string `yaml:"ip6"`
