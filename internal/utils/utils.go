@@ -15,45 +15,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package app
+package utils
 
 import (
+	"errors"
 	"net"
-
-	"github.com/miekg/dns"
-
-	"fdns/internal/utils"
 )
 
-func (a *App) blacklist() {
-	for _, ip := range a.config.BlacklistIP {
-		if _, n, err := net.ParseCIDR(ip); err == nil {
-			a.blacklistIPNet = append(a.blacklistIPNet, n)
-		} else {
-			a.blacklistIP = append(a.blacklistIP, net.ParseIP(ip))
+var (
+	ErrorInvalidIP     = errors.New("invalid ip")
+	ErrorEmptyDNSList  = errors.New("dns list is empty")
+	ErrorEmptyIP       = errors.New("ip is empty")
+	ErrorCacheNotFound = errors.New("cache is not found")
+)
+
+func ValidateIP(ip string) (string, error) {
+	if _, _, err := net.SplitHostPort(ip); err != nil {
+		if v := net.ParseIP(ip); v != nil {
+			return net.JoinHostPort(ip, "53"), nil
 		}
+		return "", ErrorInvalidIP
 	}
+	return ip, nil
 }
 
-func (a *App) InBlacklist(ip net.IP) bool {
-	for _, item := range a.blacklistIP {
-		if item.Equal(ip) {
-			return true
+func ValidateIPs(list []string) (result []string) {
+	for _, ip := range list {
+		if v, er := ValidateIP(ip); er == nil {
+			result = append(result, v)
 		}
 	}
-
-	for _, item := range a.blacklistIPNet {
-		if item.Contains(ip) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (a *App) BlackHole(name string) (dns.RR, error) {
-	if len(a.config.BlackholeIP) == 0 {
-		return nil, utils.ErrorEmptyIP
-	}
-	return a.makeA(name, a.config.BlackholeIP), nil
+	return
 }

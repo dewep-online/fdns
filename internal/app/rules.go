@@ -21,10 +21,13 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"fdns/internal/utils"
 )
 
 const (
 	cTypeNone   = "none"
+	cTypeDNS    = "dns"
 	cTypeRegexp = "regexp"
 	cTypeQuery  = "query"
 )
@@ -48,6 +51,14 @@ func (rx *RegexpRule) Compile(name string) (string, string, bool) {
 	return string(ipv4), string(ipv6), true
 }
 
+func (rx *RegexpRule) Match(name string) (string, string, bool) {
+	if !rx.reg.MatchString(name) {
+		return "", "", false
+	}
+
+	return rx.ip4, rx.ip6, true
+}
+
 func (a *App) rules() {
 	var sub string
 	for _, rule := range a.config.Rules {
@@ -56,9 +67,35 @@ func (a *App) rules() {
 			a.cache.Set(fmt.Sprintf("%s.", rule.Rule), NewRuleIP(rule.IP4, rule.IP6, false))
 			continue
 
-		case cTypeQuery:
+		case cTypeDNS:
 			sub = regexp.QuoteMeta(rule.Rule)
 			sub = strings.ReplaceAll(sub, "\\?", "?")
+			sub = strings.ReplaceAll(sub, "\\*", ".*")
+
+			if ip, er := utils.ValidateIP(rule.IP4); er == nil {
+				rule.IP4 = ip
+			} else {
+				rule.IP4 = ""
+			}
+
+			if ip, er := utils.ValidateIP(rule.IP6); er == nil {
+				rule.IP6 = ip
+			} else {
+				rule.IP6 = ""
+			}
+
+			sub = fmt.Sprintf("^.*%s\\.$", strings.Trim(sub, "^$"))
+			a.regdns[sub] = &RegexpRule{
+				reg: regexp.MustCompile(sub),
+				ip4: rule.IP4,
+				ip6: rule.IP6,
+			}
+
+			continue
+
+		case cTypeQuery:
+			sub = regexp.QuoteMeta(rule.Rule)
+			sub = strings.ReplaceAll(sub, "\\?", ".")
 			sub = strings.ReplaceAll(sub, "\\*", ".*")
 
 		case cTypeRegexp:

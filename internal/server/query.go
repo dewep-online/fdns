@@ -21,7 +21,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
 
-	"fdns/internal/app"
+	"fdns/internal/utils"
 )
 
 func (s *Server) handler(writer dns.ResponseWriter, msg *dns.Msg) {
@@ -60,12 +60,12 @@ func (s *Server) query(name string, fn func(string) (dns.RR, error), m *dns.Msg)
 		case nil:
 			answer = append(answer, rr)
 			return
-		case app.ErrorEmptyIP:
+		case utils.ErrorEmptyIP:
 			return
 		}
 	}
 
-	if rm, er := s.serv.Client.Exchange(m); er == nil {
+	nslookup := func(rm *dns.Msg) {
 		for _, answ := range rm.Answer {
 
 			switch answ.(type) {
@@ -87,5 +87,17 @@ func (s *Server) query(name string, fn func(string) (dns.RR, error), m *dns.Msg)
 			answer = append(answer, answ)
 		}
 	}
+
+	if ips, er := s.serv.App.GetDNS(name); er == nil {
+		if rm, er := s.serv.Client.Exchange(m, ips); er == nil {
+			nslookup(rm)
+			return
+		}
+	}
+
+	if rm, er := s.serv.Client.ExchangeRandomDNS(m); er == nil {
+		nslookup(rm)
+	}
+
 	return
 }

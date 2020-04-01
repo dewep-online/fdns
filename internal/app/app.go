@@ -18,21 +18,16 @@
 package app
 
 import (
-	"errors"
 	"net"
 
+	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
 
-	"github.com/miekg/dns"
+	"fdns/internal/utils"
 )
 
 const (
 	cTTL = 900
-)
-
-var (
-	ErrorEmptyIP       = errors.New("ip is empty")
-	ErrorCacheNotFound = errors.New("cache is not found")
 )
 
 type App struct {
@@ -40,6 +35,7 @@ type App struct {
 
 	cache  *DNSCache
 	regexp RegexpRules
+	regdns RegexpRules
 
 	blacklistIP    []net.IP
 	blacklistIPNet []*net.IPNet
@@ -50,6 +46,7 @@ func New(c *ConfigApp) *App {
 		config:         c,
 		cache:          NewDNSCache(c),
 		regexp:         make(RegexpRules),
+		regdns:         make(RegexpRules),
 		blacklistIP:    make([]net.IP, 0),
 		blacklistIPNet: make([]*net.IPNet, 0),
 	}
@@ -60,19 +57,38 @@ func New(c *ConfigApp) *App {
 	return app
 }
 
+func (a *App) GetDNS(name string) (result []string, err error) {
+	for _, item := range a.regdns {
+		ip4, ip6, ok := item.Match(name)
+		if !ok {
+			continue
+		}
+		if len(ip6) > 0 {
+			result = append(result, ip6)
+		}
+		if len(ip4) > 0 {
+			result = append(result, ip4)
+		}
+	}
+	if len(result) == 0 {
+		err = utils.ErrorEmptyIP
+	}
+	return
+}
+
 func (a *App) GetA(name string) (dns.RR, error) {
 	c := a.cache.Get(name)
 	if c == nil {
 		if c = a.compileRegexp(name); c == nil {
-			return nil, ErrorCacheNotFound
+			return nil, utils.ErrorCacheNotFound
 		}
 	}
 
 	if c.IsEmptyIP4() {
 		if c.IsUpdatable() {
-			return nil, ErrorCacheNotFound
+			return nil, utils.ErrorCacheNotFound
 		}
-		return nil, ErrorEmptyIP
+		return nil, utils.ErrorEmptyIP
 	}
 
 	return a.makeA(name, c.GetIP4()), nil
@@ -82,15 +98,15 @@ func (a *App) GetAAAA(name string) (dns.RR, error) {
 	c := a.cache.Get(name)
 	if c == nil {
 		if c = a.compileRegexp(name); c == nil {
-			return nil, ErrorCacheNotFound
+			return nil, utils.ErrorCacheNotFound
 		}
 	}
 
 	if c.IsEmptyIP6() {
 		if c.IsUpdatable() {
-			return nil, ErrorCacheNotFound
+			return nil, utils.ErrorCacheNotFound
 		}
-		return nil, ErrorEmptyIP
+		return nil, utils.ErrorEmptyIP
 	}
 
 	return a.makeAAAA(name, c.GetIP6()), nil
@@ -120,20 +136,27 @@ func (a *App) makeAAAA(name, ip string) dns.RR {
 	}
 }
 
-func (a *App) compileRegexp(name string) *RuleIP {
+func (a *App) compileRegexp(name string) (rip *RuleIP) {
 	var (
 		ip4, ip6 string
 		ok       bool
 	)
+
 	for reg, item := range a.regexp {
 		if ip4, ip6, ok = item.Compile(name); ok {
-			logrus.WithFields(logrus.Fields{"domen": name, "regexp": reg, "ip4": ip4, "ip6": ip6}).Info("rules match")
-			c := NewRuleIP(ip4, ip6, false)
-			a.cache.Set(name, c)
-			return c
+
+			rip = NewRuleIP(ip4, ip6, false)
+			a.cache.Set(name, rip)
+
+			logrus.WithFields(logrus.Fields{
+				"domain": name, "regexp": reg,
+				"ip4": ip4, "ip6": ip6,
+			}).Info("rules match")
+
+			break
 		}
 	}
-	return nil
+	return
 }
 
 func (a *App) Update(name, ip4, ip6 string) {
