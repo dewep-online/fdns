@@ -21,14 +21,13 @@ import (
 	"net/http"
 	"time"
 
-	dns_client "fdns/internal/dns-client"
-
 	"github.com/deweppro/core/pkg/app"
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	app2 "fdns/internal/app"
+	dns_client "fdns/internal/dns-client"
 )
 
 type Server struct {

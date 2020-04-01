@@ -22,11 +22,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
 
-	"github.com/miekg/dns"
-
 	"fdns/internal/app"
+	"fdns/internal/utils"
 )
 
 type DNSClient struct {
@@ -47,50 +47,68 @@ func New(c *app.ConfigApp) *DNSClient {
 	}
 }
 
-func (d *DNSClient) Exchange(msg *dns.Msg) (*dns.Msg, error) {
+func (d *DNSClient) ExchangeRandomDNS(msg *dns.Msg) (*dns.Msg, error) {
 	ns := d.ips[rand.Intn(len(d.ips))]
 
-	resp, _, err := d.client.Exchange(msg, ns)
+	return d.Exchange(msg, []string{ns})
+}
 
-	var (
-		mq []string
-		mr []string
-	)
-	for _, q := range msg.Question {
-		mq = append(mq, q.String())
-	}
+func (d *DNSClient) Exchange(msg *dns.Msg, addrs []string) (resp *dns.Msg, err error) {
+	var mq, mr []string
 
-	if err != nil {
-		logrus.WithError(err).
-			WithField("ns", ns).
-			WithField("q", strings.Join(mq, ",")).
-			Info("reverse")
-	} else {
+	for _, ns := range addrs {
+		resp, _, err = d.client.Exchange(msg, ns)
+		if err != nil {
+			continue
+		}
+
+		for _, q := range msg.Question {
+			mq = append(mq, q.String())
+		}
+
 		for _, a := range resp.Answer {
 			mr = append(mr, a.String())
 		}
+
 		logrus.
 			WithField("ns", ns).
 			WithField("q", strings.Join(mq, ",")).
 			WithField("r", strings.Join(mr, ",")).
 			Info("reverse")
+
+		break
 	}
 
-	return resp, err
+	if err != nil {
+		logrus.WithError(err).
+			WithField("ns", addrs).
+			WithField("q", strings.Join(mq, ",")).
+			Info("reverse")
+	}
+
+	return
 }
 
 func (d *DNSClient) Up() error {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn("example.com."), dns.TypeNS)
 
-	for _, ns := range d.ips {
-		logrus.WithField("ns", ns).Info("check nslookup")
-		if _, _, err := d.client.Exchange(msg, ns); err != nil {
-			return err
+	list := utils.ValidateIPs(d.ips)
+	d.ips = make([]string, 0)
+
+	for _, ip := range list {
+		if _, _, err := d.client.Exchange(msg, ip); err == nil {
+			logrus.WithField("dns", ip).Info("add dns")
+			d.ips = append(d.ips, ip)
 		}
+	}
+
+	if len(d.ips) == 0 {
+		return utils.ErrorEmptyDNSList
 	}
 	return nil
 }
+
 func (d *DNSClient) Down() error {
 	return nil
 }
