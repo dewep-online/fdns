@@ -39,7 +39,7 @@ func New(c *app.ConfigApp) *DNSClient {
 
 	return &DNSClient{
 		client: &dns.Client{
-			Net:          "tcp",
+			Net:          "",
 			ReadTimeout:  time.Second * 5,
 			WriteTimeout: time.Second * 5,
 		},
