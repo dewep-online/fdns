@@ -1,24 +1,20 @@
 env: dev
-log: /dev/null
+log: /dev/stdout
 
 server:
-  addr: 0.0.0.0:10000
-
-cache:
-  file: data.db
-  ttl: 900
+  tcp: 0.0.0.0:10053
+  http: 0.0.0.0:10080
 
 blackholeip: 127.0.0.1
+blacklistip:
+  - 127.0.0.1
+  - 10.0.0.0/24
 
 dns:
   - 1.1.1.1
   - '1.0.0.1:53'
   - '2606:4700:4700::1111'
   - '[2606:4700:4700::1001]:53'
-
-blacklistip:
-  - 127.0.0.1
-  - 10.0.0.0/24
 
 rules:
   - rule: example-ns.com
