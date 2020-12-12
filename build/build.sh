@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 root=`dirname $0`
-mainfile=${root}/../cmd/fdns/main.go
+mainfile=${root}/../../..
 
 cd ${root}/bin
 rm -rf ./fdns*
