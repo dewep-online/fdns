@@ -1,0 +1,11 @@
+<h2>Cached Domains</h2>
+
+<table class="table">
+  <tr *ngFor="let v of list">
+    <td>{{v.domain}}</td>
+    <td>
+      <span class="p-2" *ngFor="let ip of v.ip">{{ip}}</span>
+    </td>
+  </tr>
+  <tr><td></td><td></td></tr>
+</table>

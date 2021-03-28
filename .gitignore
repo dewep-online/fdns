@@ -11,6 +11,5 @@
 .glide
 .idea
 .vscode
-vendor
+/vendor
 
-fdns
