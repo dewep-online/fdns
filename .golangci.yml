@@ -82,7 +82,7 @@ linters:
   disable-all: true
   enable:
     - govet
-    - golint
+#    - golint
     - gofmt
     - errcheck
     - misspell

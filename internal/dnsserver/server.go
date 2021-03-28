@@ -50,13 +50,13 @@ func (o *Server) Up() error {
 
 	go func() {
 		if err := o.tcp.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Errorf("dns tcp server: ", err.Error())
+			logger.Errorf("dns tcp server: %s", err.Error())
 			o.close.Close()
 		}
 	}()
 	go func() {
 		if err := o.udp.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Errorf("dns udp server: ", err.Error())
+			logger.Errorf("dns udp server: %s", err.Error())
 			o.close.Close()
 		}
 	}()
