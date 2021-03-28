@@ -58,11 +58,15 @@ func (o *Repository) Up() error {
 	}
 
 	for domain, ips := range o.conf.RegExpRules {
+		ip4, ip6 := utils.ParseIPs(ips)
 
 		domain = fmt.Sprintf("^%s\\.$", strings.Trim(domain, "^$"))
+
 		o.regexp[domain] = &Rule{
 			reg:    regexp.MustCompile(domain),
 			format: ips,
+			ip4:    ip4,
+			ip6:    ip6,
 		}
 	}
 
@@ -75,9 +79,10 @@ func (o *Repository) Up() error {
 		domain = fmt.Sprintf("^%s\\.$", strings.Trim(domain, "^$"))
 
 		o.regexp[domain] = &Rule{
-			reg: regexp.MustCompile(domain),
-			ip4: ip4,
-			ip6: ip6,
+			reg:    regexp.MustCompile(domain),
+			format: ips,
+			ip4:    ip4,
+			ip6:    ip6,
 		}
 	}
 
