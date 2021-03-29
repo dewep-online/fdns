@@ -12,8 +12,8 @@ github.com/deweppro/go-http v1.3.1/go.mod h1:zHXI9qSZx9BUVJeUAXdOtJjMAWQ3Hh18Bn6
 github.com/deweppro/go-logger v1.2.1/go.mod h1:gTR/s2yHAz2q6mzF/0rHMzkkItm2Rce2xkvpEf/C65A=
 github.com/deweppro/go-logger v1.2.3 h1:icOV4UwBGc8s9S8zcNIcDjBK00qQtcuBZzBgRmMaq24=
 github.com/deweppro/go-logger v1.2.3/go.mod h1:bPDvX/7B3+i5f8nGOq4bZbhJrf4PgjYRCePqMrF5smw=
-github.com/deweppro/go-static v1.0.5 h1:x6yYbFGCGcW5q3Ro5LOH8xPGoHyfsxIznB27/cYJLn0=
-github.com/deweppro/go-static v1.0.5/go.mod h1:Y74ygnNwniS2d22EIe4e4kASIBaD6IlmaLKUbq90PQE=
+github.com/deweppro/go-static v1.0.6 h1:9tT0fUjVUVPIp2yWT/7uaJykp0X8sT2O5pltqusyi9s=
+github.com/deweppro/go-static v1.0.6/go.mod h1:Y74ygnNwniS2d22EIe4e4kASIBaD6IlmaLKUbq90PQE=
 github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=

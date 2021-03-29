@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/deweppro/go-http/web/routes"
 	"github.com/deweppro/go-logger"
@@ -62,26 +61,8 @@ func (v *Routes) Static(w http.ResponseWriter, r *http.Request) {
 		filename = "/index.html"
 		break
 	}
-	body := v.cache.Get(filename)
 
-	contentType := http.DetectContentType(body)
-	if contentType == "text/plain; charset=utf-8" {
-		switch true {
-		case strings.HasSuffix(filename, ".css"):
-			contentType = "text/css; charset=utf-8"
-			break
-		case strings.HasSuffix(filename, ".js"):
-			contentType = "application/javascript; charset=utf-8"
-			break
-		case strings.HasSuffix(filename, ".json"):
-			contentType = "application/json; charset=utf-8"
-			break
-		}
-	}
-
-	w.Header().Set("Content-Type", contentType)
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(body); err != nil {
+	if err := v.cache.Write(filename, w); err != nil {
 		logger.Errorf("static response: %s", err.Error())
 	}
 }
