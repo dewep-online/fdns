@@ -52,8 +52,8 @@ func (o *Repository) Up() error {
 
 		o.resolve[domain] = &Rule{
 			reg: regexp.MustCompile(domain),
-			ip4: ip4,
-			ip6: ip6,
+			ip4: utils.ValidateDNSs(ip4),
+			ip6: utils.ValidateDNSs(ip6),
 		}
 	}
 

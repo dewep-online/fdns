@@ -25,3 +25,8 @@ develop_up:
 	bash scripts/docker.sh docker_up
 develop_down:
 	bash scripts/docker.sh docker_down
+
+install: build_back
+	sudo systemctl stop supervisor
+	sudo mv build/bin/fdns_amd64 /usr/local/bin/fdns
+	sudo systemctl start supervisor

@@ -30,3 +30,43 @@ func TestParseIPs(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDNS(t *testing.T) {
+	tests := []struct {
+		name    string
+		ip      string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "Case1",
+			ip:      "8.8.8.8",
+			want:    "8.8.8.8:53",
+			wantErr: false,
+		},
+		{
+			name:    "Case2",
+			ip:      "8.8.8.8:1053",
+			want:    "8.8.8.8:1053",
+			wantErr: false,
+		},
+		{
+			name:    "Case3",
+			ip:      "2001:4860:4860::8888",
+			want:    "[2001:4860:4860::8888]:53",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := utils.ValidateDNS(tt.ip)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateDNS() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ValidateDNS() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

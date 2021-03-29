@@ -69,7 +69,7 @@ func (o *Client) Up() error {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn("example.com."), dns.TypeNS)
 
-	list := utils.ValidateIPs(o.ips)
+	list := utils.ValidateDNSs(o.ips)
 	o.ips = make([]string, 0)
 
 	for _, ip := range list {
