@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi(in *jlexer.Lexer, out *CacheListItem) {
+func easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi(in *jlexer.Lexer, out *CacheListItem) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -71,7 +71,7 @@ func easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi(in *jlexer.Lexer, 
 		in.Consumed()
 	}
 }
-func easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi(out *jwriter.Writer, in CacheListItem) {
+func easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi(out *jwriter.Writer, in CacheListItem) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -102,27 +102,27 @@ func easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi(out *jwriter.Write
 // MarshalJSON supports json.Marshaler interface
 func (v CacheListItem) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi(&w, v)
+	easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CacheListItem) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi(w, v)
+	easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CacheListItem) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi(&r, v)
+	easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CacheListItem) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi(l, v)
+	easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi(l, v)
 }
-func easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi1(in *jlexer.Lexer, out *CacheList) {
+func easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi1(in *jlexer.Lexer, out *CacheList) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		in.Skip()
@@ -150,7 +150,7 @@ func easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi1(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi1(out *jwriter.Writer, in CacheList) {
+func easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi1(out *jwriter.Writer, in CacheList) {
 	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 		out.RawString("null")
 	} else {
@@ -168,23 +168,23 @@ func easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi1(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v CacheList) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi1(&w, v)
+	easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CacheList) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson168ae10cEncodeGithubComDewepGamesFdnsInternalApi1(w, v)
+	easyjson168ae10cEncodeGithubComDewepOnlineFdnsInternalApi1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CacheList) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi1(&r, v)
+	easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CacheList) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson168ae10cDecodeGithubComDewepGamesFdnsInternalApi1(l, v)
+	easyjson168ae10cDecodeGithubComDewepOnlineFdnsInternalApi1(l, v)
 }

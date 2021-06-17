@@ -1,12 +1,12 @@
 package dnsserver
 
-import "github.com/deweppro/go-app"
+import "github.com/deweppro/go-app/application"
 
 var (
-	Module = app.Modules{
+	Module = application.Modules{
 		New,
 	}
-	Config = app.Modules{
+	Config = application.Modules{
 		&ConfigTCP{},
 	}
 )

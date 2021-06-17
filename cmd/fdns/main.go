@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 
-	"github.com/dewep-games/fdns/internal/dnsserver"
-
-	"github.com/dewep-games/fdns/internal/api"
-	"github.com/dewep-games/fdns/internal/webserver"
-	"github.com/dewep-games/fdns/pkg"
-	"github.com/deweppro/go-app"
+	"github.com/dewep-online/fdns/internal/api"
+	"github.com/dewep-online/fdns/internal/dnsserver"
+	"github.com/dewep-online/fdns/internal/webserver"
+	"github.com/dewep-online/fdns/pkg"
+	"github.com/deweppro/go-app/application"
 	"github.com/deweppro/go-http/web/debug"
 	"github.com/deweppro/go-logger"
 )
@@ -18,7 +17,7 @@ var configFile = flag.String("config", "./config.yaml", "path to config file")
 func main() {
 	flag.Parse()
 
-	app.New().
+	application.New().
 		Logger(logger.Default()).
 		ConfigFile(
 			*configFile,

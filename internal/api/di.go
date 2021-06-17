@@ -1,14 +1,14 @@
 package api
 
 import (
-	"github.com/deweppro/go-app"
+	"github.com/deweppro/go-app/application"
 )
 
 var (
 	//Module di injector
-	Module = app.Modules{
+	Module = application.Modules{
 		NewAPI,
 	}
 	//Config di injector
-	Config = app.Modules{}
+	Config = application.Modules{}
 )

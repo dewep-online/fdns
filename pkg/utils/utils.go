@@ -4,6 +4,9 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"time"
+
+	"github.com/deweppro/go-app/application"
 )
 
 var (
@@ -55,4 +58,17 @@ func ParseIPs(data string) (ip4, ip6 []string) {
 		ip4 = append(ip4, host)
 	}
 	return
+}
+
+func ReTry(count int, cb func() error) error {
+	var err error
+	for i := 0; i < count; i++ {
+		if er := cb(); er != nil {
+			err = application.WrapErrors(err, er, "retry")
+			<-time.After(time.Millisecond * 100)
+			continue
+		}
+		break
+	}
+	return err
 }

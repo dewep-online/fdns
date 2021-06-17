@@ -3,7 +3,7 @@ package blacklist
 import (
 	"net"
 
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/miekg/dns"
 )
 

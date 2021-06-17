@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dewep-games/fdns/pkg/blacklist"
-	"github.com/dewep-games/fdns/pkg/cache"
-	"github.com/dewep-games/fdns/pkg/dnscli"
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/blacklist"
+	"github.com/dewep-online/fdns/pkg/cache"
+	"github.com/dewep-online/fdns/pkg/dnscli"
+	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/utils"
 )
 
 type (

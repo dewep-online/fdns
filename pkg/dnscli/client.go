@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
@@ -16,22 +16,21 @@ type Client struct {
 }
 
 func New(c *Config) *Client {
-	rand.Seed(time.Now().UnixNano())
-
 	return &Client{
 		cli: &dns.Client{
 			Net:          "",
 			ReadTimeout:  time.Second * 5,
 			WriteTimeout: time.Second * 5,
 		},
-		ips: c.DNS,
+		ips: append([]string{}, c.DNS...),
 	}
 }
 
 func (o *Client) ExchangeRandomDNS(msg *dns.Msg) (*dns.Msg, error) {
-	ns := o.ips[rand.Intn(len(o.ips))]
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(o.ips), func(i, j int) { o.ips[i], o.ips[j] = o.ips[j], o.ips[i] })
 
-	return o.Exchange(msg, []string{ns})
+	return o.Exchange(msg, o.ips)
 }
 
 func (o *Client) Exchange(msg *dns.Msg, addrs []string) (resp *dns.Msg, err error) {

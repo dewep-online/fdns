@@ -3,8 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/dewep-games/fdns/pkg/cache"
-
+	"github.com/dewep-online/fdns/pkg/cache"
 	"github.com/deweppro/go-http/web/routes"
 )
 

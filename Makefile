@@ -2,6 +2,7 @@ SHELL=/bin/bash
 
 .PHONY: run_back run_front
 run_back:
+	go generate ./...
 	go run -race cmd/fdns/main.go -config=./configs/config.yaml
 run_front:
 	cd web && npm ci --no-delete --cache=/tmp && npm run start
@@ -26,7 +27,7 @@ develop_up:
 develop_down:
 	bash scripts/docker.sh docker_down
 
-install: build_back
+install: build_font build_back
 	sudo systemctl stop supervisor
-	sudo mv build/bin/fdns_amd64 /usr/local/bin/fdns
+	sudo cp build/bin/fdns_amd64 /usr/local/bin/fdns
 	sudo systemctl start supervisor

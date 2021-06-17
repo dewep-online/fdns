@@ -1,9 +1,8 @@
 package dnsserver
 
 import (
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-logger"
-
 	"github.com/miekg/dns"
 )
 

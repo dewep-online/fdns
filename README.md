@@ -1,13 +1,13 @@
 
 # demo
 
-[![Coverage Status](https://coveralls.io/repos/github/dewep-games/fdns/badge.svg?branch=master)](https://coveralls.io/github/dewep-games/fdns?branch=master)
-[![Release](https://img.shields.io/github/release/dewep-games/fdns.svg?style=flat-square)](https://github.com/dewep-games/fdns/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/dewep-games/fdns)](https://goreportcard.com/report/github.com/dewep-games/fdns)
-[![Build Status](https://travis-ci.com/dewep-games/fdns.svg?branch=master)](https://travis-ci.com/dewep-games/fdns)
+[![Coverage Status](https://coveralls.io/repos/github/dewep-online/fdns/badge.svg?branch=master)](https://coveralls.io/github/dewep-online/fdns?branch=master)
+[![Release](https://img.shields.io/github/release/dewep-online/fdns.svg?style=flat-square)](https://github.com/dewep-online/fdns/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dewep-online/fdns)](https://goreportcard.com/report/github.com/dewep-online/fdns)
+[![Build Status](https://travis-ci.com/dewep-online/fdns.svg?branch=master)](https://travis-ci.com/dewep-online/fdns)
 
 # install
 
 ```go
- go get github.com/dewep-games/fdns/cmd/... 
+ go get github.com/dewep-online/fdns/cmd/... 
 ```

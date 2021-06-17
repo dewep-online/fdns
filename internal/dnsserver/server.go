@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dewep-games/fdns/pkg/rules"
-	"github.com/deweppro/go-app"
+	"github.com/dewep-online/fdns/pkg/rules"
+	"github.com/deweppro/go-app/application"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
@@ -16,12 +16,12 @@ type (
 		tcp   *dns.Server
 		udp   *dns.Server
 		conf  *ConfigTCP
-		close *app.ForceClose
+		close *application.ForceClose
 		store *rules.Repository
 	}
 )
 
-func New(c *ConfigTCP, f *app.ForceClose, r *rules.Repository) *Server {
+func New(c *ConfigTCP, f *application.ForceClose, r *rules.Repository) *Server {
 	return &Server{
 		conf:  c,
 		close: f,

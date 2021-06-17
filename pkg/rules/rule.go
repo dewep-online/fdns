@@ -3,7 +3,7 @@ package rules
 import (
 	"regexp"
 
-	"github.com/dewep-games/fdns/pkg/utils"
+	"github.com/dewep-online/fdns/pkg/utils"
 )
 
 type (
