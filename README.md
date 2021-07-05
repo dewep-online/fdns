@@ -8,6 +8,6 @@
 
 # install
 
-```go
- go get github.com/dewep-online/fdns/cmd/... 
+```bash
+    make install
 ```
