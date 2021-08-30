@@ -1,0 +1,44 @@
+name: "DEB Build Ubuntu"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Set up NodeJS"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.15.4
+
+      - name: "Frontend build"
+        run: make build_font
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: "Go tools install"
+        run: |
+          go install github.com/deweppro/go-static/cmd/static@latest
+          go install github.com/mailru/easyjson/easyjson@latest
+          go install github.com/dewep-online/deb-builder/cmd/deb-builder@latest
+
+      - name: "Backend build"
+        run: make build_back
+
+      - name: "Deb build"
+        run: deb-builder build --base-dir=${{ github.workspace }}/deb --tmp-dir=/tmp/deb
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: "deb package"
+          path: ${{ github.workspace }}/deb/f/fdns/*.deb
+          if-no-files-found: error
