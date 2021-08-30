@@ -34,3 +34,6 @@ jobs:
 
       - name: "Deb build"
         run: make deb_build
+
+      - name: "Deb build"
+        run: make deb_build
