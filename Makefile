@@ -33,6 +33,3 @@ ci:
 
 deb: build_font build_back
 	deb-builder build
-
-deb_build:
-	deb-builder build --base-dir=./deb --tmp-dir=/tmp/deb
