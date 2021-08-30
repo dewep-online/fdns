@@ -17,23 +17,22 @@ jobs:
         with:
           node-version: 14.15.4
 
-      - name: "Frontend Build"
+      - name: "Frontend build"
         run: make build_font
 
       - name: "Set up Go"
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
+
+      - name: "Go tools install"
         run: |
           go install github.com/deweppro/go-static/cmd/static@latest
           go install github.com/mailru/easyjson/easyjson@latest
           go install github.com/dewep-online/deb-builder/cmd/deb-builder@latest
 
-      - name: "Backend Build"
+      - name: "Backend build"
         run: make build_back
-
-      - name: "Deb build"
-        run: make deb_build
 
       - name: "Deb build"
         run: make deb_build
