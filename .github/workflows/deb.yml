@@ -1,4 +1,4 @@
-name: deb build
+name: DEB Build Ubuntu
 
 on:
   push:
@@ -12,15 +12,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-
       - name: Set up NodeJS
         uses: actions/setup-node@v2
         with:
           node-version: 14.15.4
+
+      - name: Frontend Build
+        run: make build_font
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - run: go install github.com/deweppro/go-static/cmd/static@latest
+      - run: go install github.com/mailru/easyjson/easyjson@latest
+      - run: go install github.com/dewep-online/deb-builder/cmd/deb-builder@latest
+
+      - name: Backend Build
+        run: make build_back
 
       - name: Deb build
         run: make deb-build
