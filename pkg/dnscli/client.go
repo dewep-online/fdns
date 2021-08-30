@@ -72,9 +72,11 @@ func (o *Client) Up() error {
 	o.ips = make([]string, 0)
 
 	for _, ip := range list {
-		if _, _, err := o.cli.Exchange(msg, ip); err == nil {
-			logger.Infof("add dns: %s", ip)
-			o.ips = append(o.ips, ip)
+		logger.Infof("add dns: %s", ip)
+		o.ips = append(o.ips, ip)
+
+		if _, _, err := o.cli.Exchange(msg, ip); err != nil {
+			logger.Errorf("error dns: [%s] %s", ip, err.Error())
 		}
 	}
 

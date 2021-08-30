@@ -27,7 +27,9 @@ develop_up:
 develop_down:
 	bash scripts/docker.sh docker_down
 
-install: build_font build_back
-	sudo systemctl stop supervisor
-	sudo cp build/bin/fdns_amd64 /usr/local/bin/fdns
-	sudo systemctl start supervisor
+.PHONY: ci
+ci:
+	bash scripts/ci.sh
+
+deb: build_font build_back
+	deb-builder build

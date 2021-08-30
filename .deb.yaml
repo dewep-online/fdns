@@ -1,0 +1,26 @@
+package: fdns
+source: fdns
+version: 0.0.1
+architecture:
+  - amd64
+maintainer: DewepOnline <deb@dewep.online>
+homepage: https://dewep.onlone/fdns.html
+description:
+  - Filter DNS
+section: web
+priority: optional
+control:
+  depends:
+    - systemd
+    - ca-certificates
+  build: scripts/build.sh %s
+  conffiles:
+    - /etc/fdns/config.yaml
+  preinst: scripts/preinst.sh
+  postinst: scripts/postinst.sh
+  prerm: scripts/prerm.sh
+  postrm: scripts/postrm.sh
+data:
+  build/bin/fdns_amd64: usr/bin/fdns
+  configs/config.yaml: etc/fdns/config.yaml
+  init/systemd/fdns.service: etc/systemd/system/fdns.service
