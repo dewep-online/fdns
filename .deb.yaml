@@ -3,7 +3,7 @@ source: fdns
 version: 0.0.2
 architecture:
   - amd64
-maintainer: DewepOnline <deb@dewep.online>
+maintainer: DewepPro <support@dewep.pro>
 homepage: https://www.dewep.pro/products/fdns
 description:
   - Filter DNS
