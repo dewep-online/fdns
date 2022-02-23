@@ -1,10 +1,10 @@
 package: fdns
 source: fdns
-version: 0.0.1
+version: 0.0.3
 architecture:
   - amd64
 maintainer: DewepOnline <deb@dewep.online>
-homepage: https://dewep.onlone/fdns.html
+homepage: https://dewep.online/fdns.html
 description:
   - Filter DNS
 section: web

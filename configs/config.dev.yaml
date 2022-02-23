@@ -1,6 +1,6 @@
 env: dev
 
-log: /var/log/fdns.log
+log: /dev/stdout
 level: 3
 
 http:
@@ -10,13 +10,13 @@ debug:
 
 srv:
   enable: true
-  addr: 0.0.0.0:53
+  addr: 0.0.0.0:8053
 dot:
   enable: false
-  addr: 0.0.0.0:853
+  addr: 0.0.0.0:8853
   cert:
-    public: /etc/ssl/certs/fdns/public.pem
-    private: /etc/ssl/certs/fdns/private.pem
+    public: ./public.pem
+    private: ./private.pem
 
 middleware:
   throttling: 300
@@ -28,10 +28,8 @@ blacklistip:
 dns:
   - 1.1.1.1
   - "1.0.0.1:53"
-#  - "2606:4700:4700::1111"
-#  - "[2606:4700:4700::1001]:53"
 
-dump-rules: /var/lib/fdns/dump.txt
+dump-rules: ./dump.txt
 
 adblock-rules:
   - https://filters.adtidy.org/extension/ublock/filters/2_without_easylist.txt
@@ -47,14 +45,17 @@ adblock-rules:
   - https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt
 
 dns-rules:
-#  "example-ns.com": "8.8.8.8, [2001:4860:4860::8888]:53"
+  "example-ns.com": "8.8.8.8, [2001:4860:4860::8888]:53"
 
 host-rules:
-#  "example-host.com": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "example-host.com": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "example-host2.com": ""
 
 regexp-rules:
-#  '.*\.example-regexp\.com': "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
-#  '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com': "$1.$2.$3.$4"
+  '.*\.example-regexp\.com': "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com': "$1.$2.$3.$4"
+  '(\d+)-(\d+)-(\d+)-(\d+)\.example2\.com': ""
 
 query-rules:
-#  "ex?mple.*": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "ex?mple.*": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "ex?mple2.*": ""

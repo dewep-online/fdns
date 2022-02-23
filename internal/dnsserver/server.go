@@ -1,6 +1,9 @@
 package dnsserver
 
 import (
+	"crypto/tls"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -8,39 +11,71 @@ import (
 	"github.com/deweppro/go-app/application"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
-	"github.com/pkg/errors"
 )
 
 type (
 	Server struct {
-		tcp   *dns.Server
-		udp   *dns.Server
-		conf  *ConfigTCP
-		close *application.ForceClose
-		store *rules.Repository
+		conf    *ConfigTCP
+		servers map[string]*dns.Server
+		store   *rules.Repository
+		close   *application.ForceClose
 	}
 )
 
 func New(c *ConfigTCP, f *application.ForceClose, r *rules.Repository) *Server {
 	return &Server{
-		conf:  c,
-		close: f,
-		store: r,
+		servers: make(map[string]*dns.Server),
+		conf:    c,
+		close:   f,
+		store:   r,
 	}
 }
 
-func (o *Server) Up() error {
+func (v *Server) Up() error {
 	handler := dns.NewServeMux()
-	handler.HandleFunc(".", o.handler)
+	handler.HandleFunc(".", v.handler)
 
-	o.tcp = &dns.Server{Addr: o.conf.Server.Addr,
+	if err := v.dnsSetup(handler); err != nil {
+		return err
+	}
+
+	if err := v.dotSetup(handler); err != nil {
+		return err
+	}
+
+	v.runServers()
+
+	return nil
+
+}
+
+func (v *Server) Down() (err error) {
+	for name, server := range v.servers {
+		if err := server.Shutdown(); err != nil && err != http.ErrServerClosed {
+			logger.Errorf("%s [%s]: %s", name, server.Addr, err.Error())
+		} else {
+			logger.Infof("%s stop: %s", name, server.Addr)
+		}
+
+	}
+	return nil
+}
+
+func (v *Server) dnsSetup(handler *dns.ServeMux) error {
+	if !v.conf.Srv.Enable {
+		return nil
+	}
+
+	v.servers["dns_tcp"] = &dns.Server{
+		Addr:         v.conf.Srv.Addr,
 		Net:          "tcp",
 		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
 
-	o.udp = &dns.Server{Addr: o.conf.Server.Addr,
+	v.servers["dns_udp"] = &dns.Server{
+		Addr:         v.conf.Srv.Addr,
 		Net:          "udp",
 		Handler:      handler,
 		UDPSize:      65535,
@@ -48,36 +83,74 @@ func (o *Server) Up() error {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	go func() {
-		if err := o.tcp.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Errorf("dns tcp server: %s", err.Error())
-			o.close.Close()
-		}
-	}()
-	go func() {
-		if err := o.udp.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Errorf("dns udp server: %s", err.Error())
-			o.close.Close()
-		}
-	}()
-
-	logger.Infof("dns serv start: %s", o.conf.Server.Addr)
 	return nil
 }
 
-func (o *Server) Down() (err error) {
-	if err1 := o.tcp.Shutdown(); err1 != nil {
-		err = err1
+func (v *Server) dotSetup(handler *dns.ServeMux) error {
+	if !v.conf.DoT.Enable {
+		return nil
 	}
 
-	if err2 := o.udp.Shutdown(); err2 != nil {
-		if err == nil {
-			err = err2
-		} else {
-			err = errors.Wrap(err, err2.Error())
-		}
+	cert, err := v.tlsCertificate()
+	if err != nil {
+		return fmt.Errorf("read tls certificate: %w", err)
 	}
 
-	logger.Infof("dns serv stop: %s", o.conf.Server.Addr)
-	return
+	certConf := &tls.Config{Certificates: []tls.Certificate{*cert}}
+
+	v.servers["dot_tcp"] = &dns.Server{
+		Addr:         v.conf.DoT.Addr,
+		Net:          "tcp",
+		Handler:      handler,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		TLSConfig:    certConf,
+	}
+
+	v.servers["dot_udp"] = &dns.Server{
+		Addr:         v.conf.DoT.Addr,
+		Net:          "udp",
+		Handler:      handler,
+		UDPSize:      65535,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		TLSConfig:    certConf,
+	}
+
+	return nil
+}
+
+func (v *Server) tlsCertificate() (*tls.Certificate, error) {
+	pubPem, err := ioutil.ReadFile(v.conf.DoT.Cert.Public)
+	if err != nil {
+		return nil, err
+	}
+
+	keyPem, err := ioutil.ReadFile(v.conf.DoT.Cert.Private)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := tls.X509KeyPair(pubPem, keyPem)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cert, nil
+}
+
+func (v *Server) runServers() {
+	for name, server := range v.servers {
+		server := server
+		name := name
+
+		go func(name string, srv *dns.Server) {
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Errorf("%s [%s]: %s", name, srv.Addr, err.Error())
+				v.close.Close()
+			}
+		}(name, server)
+
+		logger.Infof("%s start: %s", name, server.Addr)
+	}
 }

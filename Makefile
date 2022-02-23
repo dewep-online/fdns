@@ -3,7 +3,7 @@ SHELL=/bin/bash
 .PHONY: run_back run_front
 run_back:
 	go generate ./...
-	go run -race cmd/fdns/main.go -config=./configs/config.yaml
+	go run -race cmd/fdns/main.go -config=./configs/config.dev.yaml
 run_front:
 	cd web && npm ci --no-delete --cache=/tmp && npm run start
 

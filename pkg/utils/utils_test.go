@@ -20,12 +20,12 @@ func TestParseIPs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotIp4, gotIp6 := utils.ParseIPs(tt.args)
+			gotIp4, gotIp6 := utils.DecodeIPs(tt.args)
 			if !reflect.DeepEqual(gotIp4, tt.wantIp4) {
-				t.Errorf("ParseIPs() gotIp4 = %v, want %v", gotIp4, tt.wantIp4)
+				t.Errorf("DecodeIPs() gotIp4 = %v, want %v", gotIp4, tt.wantIp4)
 			}
 			if !reflect.DeepEqual(gotIp6, tt.wantIp6) {
-				t.Errorf("ParseIPs() gotIp6 = %v, want %v", gotIp6, tt.wantIp6)
+				t.Errorf("DecodeIPs() gotIp6 = %v, want %v", gotIp6, tt.wantIp6)
 			}
 		})
 	}
@@ -66,6 +66,50 @@ func TestValidateDNS(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("ValidateDNS() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEncodeIPs(t *testing.T) {
+	type args struct {
+		ip4 []string
+		ip6 []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "case 1",
+			args: args{
+				ip4: []string{"0.0.0.0"},
+				ip6: []string{"0:0:0:0:0:ffff:ffff:ffff"},
+			},
+			want: "0.0.0.0, 0:0:0:0:0:ffff:ffff:ffff",
+		},
+		{
+			name: "case 2",
+			args: args{
+				ip4: []string{},
+				ip6: []string{"0:0:0:0:0:ffff:ffff:ffff"},
+			},
+			want: "0:0:0:0:0:ffff:ffff:ffff",
+		},
+		{
+			name: "case 3",
+			args: args{
+				ip4: []string{"0.0.0.0"},
+				ip6: []string{},
+			},
+			want: "0.0.0.0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := utils.EncodeIPs(tt.args.ip4, tt.args.ip6); got != tt.want {
+				t.Errorf("EncodeIPs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

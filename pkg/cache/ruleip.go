@@ -1,87 +1,65 @@
 package cache
 
-import (
-	"sync"
-)
+type Record struct {
+	ip4 map[string]struct{}
+	ip6 map[string]struct{}
+	ttl int64
+}
 
-type (
-	Item struct {
-		ip4 itemMap
-		ip6 itemMap
-		is  bool
-		sync.RWMutex
+func NewRecord(ip4, ip6 []string, ttl int64) *Record {
+	item := &Record{
+		ip4: make(map[string]struct{}),
+		ip6: make(map[string]struct{}),
+		ttl: ttl,
 	}
-	itemMap map[string]struct{}
-)
-
-func Create(ip4, ip6 []string, canup bool) *Item {
-	item := &Item{ip4: make(itemMap), ip6: make(itemMap), is: true}
-	item.SetIP4(ip4...)
-	item.SetIP6(ip6...)
-	item.SetUpdatable(canup)
+	for _, ip := range ip4 {
+		item.ip4[ip] = struct{}{}
+	}
+	for _, ip := range ip6 {
+		item.ip6[ip] = struct{}{}
+	}
 	return item
 }
 
-func (o *Item) IsUpdatable() bool {
-	o.RLock()
-	defer o.RUnlock()
-	return o.is
+func (v *Record) IsStatic() bool {
+	return v.ttl == 0
 }
 
-func (o *Item) SetUpdatable(v bool) {
-	o.Lock()
-	o.is = v
-	o.Unlock()
+func (v *Record) GetTTL() int64 {
+	return v.ttl
 }
 
-func (o *Item) SetIP4(v ...string) {
-	if len(v) == 0 || !o.IsUpdatable() {
-		return
+func (v *Record) GetIP4() []string {
+	vv := make([]string, 0, len(v.ip4))
+	for ip := range v.ip4 {
+		vv = append(vv, ip)
 	}
-	o.Lock()
-	for _, ip := range v {
-		o.ip4[ip] = struct{}{}
-	}
-	o.Unlock()
+	return vv
 }
 
-func (o *Item) GetIP4() (v []string) {
-	o.RLock()
-	defer o.RUnlock()
-	for ip := range o.ip4 {
-		v = append(v, ip)
-	}
-	return
+func (v *Record) HasIP4() bool {
+	return len(v.ip4) > 0
 }
 
-func (o *Item) HasIP4() bool {
-	o.RLock()
-	defer o.RUnlock()
-	return len(o.ip4) > 0
+func (v *Record) GetIP6() []string {
+	vv := make([]string, 0, len(v.ip6))
+	for ip := range v.ip6 {
+		vv = append(vv, ip)
+	}
+	return vv
 }
 
-func (o *Item) GetIP6() (v []string) {
-	o.RLock()
-	defer o.RUnlock()
-	for ip := range o.ip6 {
-		v = append(v, ip)
-	}
-	return
+func (v *Record) HasIP6() bool {
+	return len(v.ip6) > 0
 }
 
-func (o *Item) SetIP6(v ...string) {
-	if len(v) == 0 || !o.IsUpdatable() {
-		return
+func (v *Record) AllIPs() []string {
+	vv := make([]string, 0, len(v.ip4)+len(v.ip6))
+	for ip := range v.ip4 {
+		vv = append(vv, ip)
 	}
-	o.Lock()
-	for _, ip := range v {
-		o.ip6[ip] = struct{}{}
+	for ip := range v.ip6 {
+		vv = append(vv, ip)
 	}
-	o.Unlock()
-}
-
-func (o *Item) HasIP6() bool {
-	o.RLock()
-	defer o.RUnlock()
-	return len(o.ip6) > 0
+	return vv
 }

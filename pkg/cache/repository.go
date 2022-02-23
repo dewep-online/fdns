@@ -4,72 +4,96 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dewep-online/fdns/pkg/utils"
+	"github.com/deweppro/go-app/application"
 )
 
-type (
-	Cache      map[string]*Item
-	Repository struct {
-		data Cache
-		sync.RWMutex
-	}
-)
+type Repository struct {
+	data map[string]*Record
+	temp map[string]*Record
 
-func New() *Repository {
+	ctx *application.ForceClose
+	wg  sync.WaitGroup
+	mux sync.RWMutex
+}
+
+func New(ctx *application.ForceClose) *Repository {
 	return &Repository{
-		data: make(Cache),
+		data: make(map[string]*Record),
+		temp: make(map[string]*Record),
+		ctx:  ctx,
 	}
 }
 
-func (o *Repository) Get(name string) *Item {
-	o.RLock()
-	defer o.RUnlock()
-	if d, ok := o.data[name]; ok {
+func (v *Repository) Get(name string) *Record {
+	v.mux.RLock()
+	defer v.mux.RUnlock()
+
+	if d, ok := v.data[name]; ok {
+		return d
+	}
+	if d, ok := v.temp[name]; ok {
 		return d
 	}
 	return nil
 }
 
-func (o *Repository) Set(name string, d *Item) {
-	o.Lock()
-	o.data[name] = d
-	o.Unlock()
-}
+func (v *Repository) Set(name string, ip4, ip6 []string, ttl int64) {
+	v.mux.Lock()
+	defer v.mux.Unlock()
 
-func (o *Repository) Del(name string) {
-	o.Lock()
-	delete(o.data, name)
-	o.Unlock()
-}
-
-func (o *Repository) Update(name string, ip4, ip6 []string) {
-	d := o.Get(name)
-	if d != nil {
-		d.SetIP4(ip4...)
-		d.SetIP6(ip6...)
+	m := NewRecord(ip4, ip6, ttl)
+	if m.IsStatic() {
+		v.temp[name] = m
 	} else {
-		nr := Create(ip4, ip6, true)
-		o.Set(name, nr)
-		time.AfterFunc(utils.TTL*time.Second, func() {
-			o.Del(name)
-		})
+		v.data[name] = m
 	}
 }
 
-func (o *Repository) List(call func(name string, ip []string)) {
-	o.RLock()
-	defer o.RUnlock()
+func (v *Repository) Del(name string) {
+	v.mux.Lock()
+	defer v.mux.Unlock()
 
-	for name, v := range o.data {
-		v.RLock()
-		ip := make([]string, 0, len(v.ip4)+len(v.ip6))
-		for ip4 := range v.ip4 {
-			ip = append(ip, ip4)
-		}
-		for ip6 := range v.ip6 {
-			ip = append(ip, ip6)
-		}
-		v.RUnlock()
+	delete(v.data, name)
+}
+
+func (v *Repository) List(call func(name string, ip []string)) {
+	v.mux.RLock()
+	defer v.mux.RUnlock()
+
+	for name, vv := range v.data {
+		ip := vv.AllIPs()
 		call(name, ip)
 	}
+}
+
+func (v *Repository) Up() error {
+	v.wg.Add(1)
+	go func() {
+		defer v.wg.Done()
+
+		timer := time.NewTicker(time.Minute)
+		defer timer.Stop()
+
+		for {
+			select {
+			case <-v.ctx.C.Done():
+				return
+
+			case t := <-timer.C:
+				v.mux.Lock()
+				for name, record := range v.data {
+					if record.GetTTL() <= t.Unix() {
+						delete(v.data, name)
+					}
+				}
+				v.mux.Unlock()
+			}
+		}
+	}()
+	return nil
+}
+
+func (v *Repository) Down() error {
+	v.wg.Wait()
+	return nil
 }
