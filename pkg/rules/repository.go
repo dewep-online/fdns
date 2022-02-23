@@ -150,17 +150,17 @@ func (v *Repository) nslookup(msg *dns.Msg, ips []string) (int64, []string) {
 		ttl uint32
 	)
 	for _, vv := range resp.Answer {
-		switch vv := vv.(type) {
+		switch vv.(type) {
 		case *dns.A:
-			if v.blacklist.Has(vv.A) {
+			if v.blacklist.Has(vv.(*dns.A).A) {
 				continue
 			}
-			ip = append(ip, vv.A.String())
+			ip = append(ip, vv.(*dns.A).A.String())
 		case *dns.AAAA:
-			if v.blacklist.Has(vv.AAAA) {
+			if v.blacklist.Has(vv.(*dns.AAAA).AAAA) {
 				continue
 			}
-			ip = append(ip, vv.AAAA.String())
+			ip = append(ip, vv.(*dns.AAAA).AAAA.String())
 		}
 
 		if ttl < vv.Header().Ttl {

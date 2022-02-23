@@ -17,9 +17,6 @@ func (v *Server) handler(writer dns.ResponseWriter, msg *dns.Msg) {
 	}
 
 	if err := writer.WriteMsg(response); err != nil {
-		logger.WithFields(logger.Fields{
-			"err": err.Error(),
-			"msg": msg.String(),
-		}).Errorf("dns response")
+		logger.Errorf("response ERROR: %s DNS %s", err.Error(), msg.String())
 	}
 }

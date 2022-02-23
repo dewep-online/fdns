@@ -6,9 +6,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dewep-online/fdns/pkg/httpcli"
-	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-logger"
+
+	"github.com/dewep-online/fdns/pkg/httpcli"
+
+	"github.com/dewep-online/fdns/pkg/utils"
 )
 
 const (
@@ -105,7 +107,7 @@ func QueryRules(data map[string]string, setter ResolveSetter) error {
 
 var (
 	cli = httpcli.New()
-	rex = regexp.MustCompile(`(?m)^\|\|([a-z0-9-.]+)\^`)
+	rex = regexp.MustCompile(`\|\|([a-z0-9-.]+)\^`)
 )
 
 func AdblockRules(data []string, setter HostSetter) {
@@ -113,26 +115,18 @@ func AdblockRules(data []string, setter HostSetter) {
 	for _, uri := range data {
 		code, b, err := cli.Call(http.MethodGet, uri, nil)
 		if err != nil {
-			logger.WithFields(logger.Fields{
-				"err":  err.Error(),
-				"code": code,
-				"url":  uri,
-			}).Errorf("adblock")
+			logger.Warnf("adblock [%d] %s: %s", code, uri, err.Error())
 			continue
 		}
 		if code != http.StatusOK {
-			logger.WithFields(logger.Fields{
-				"code": code,
-				"url":  uri,
-			}).Errorf("adblock")
+			logger.Warnf("adblock [%d] %s: %s", code, uri, err.Error())
 			continue
 		}
 
 		result := rex.FindAll(b, -1)
+		logger.Infof("adblock [%d] %s", len(result), uri)
 		for _, domain := range result {
 			setter.SetHostResolve(string(domain[2:len(domain)-1])+".", nil, nil, 0)
 		}
-
-		logger.WithFields(logger.Fields{"count": len(result), "url": uri}).Infof("adblock")
 	}
 }
