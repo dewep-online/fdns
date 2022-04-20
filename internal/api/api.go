@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dewep-online/fdns/pkg/cache"
-	"github.com/deweppro/go-http/web/routes"
+	"github.com/deweppro/go-http/pkg/routes"
 )
 
 //API model
@@ -23,7 +23,6 @@ func NewAPI(route *routes.Router, repo *cache.Repository) *API {
 
 //Up startup api service
 func (v *API) Up() error {
-	v.route.Route("/api", v.Index, http.MethodGet)
 	v.route.Route("/api/cache/list", v.CacheList, http.MethodGet)
 
 	return nil

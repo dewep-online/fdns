@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dewep-online/fdns/pkg/rules"
-	"github.com/deweppro/go-app/application"
+	"github.com/deweppro/go-app/application/ctx"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
@@ -18,20 +18,18 @@ type (
 		conf    *ConfigTCP
 		servers map[string]*dns.Server
 		store   *rules.Repository
-		close   *application.ForceClose
 	}
 )
 
-func New(c *ConfigTCP, f *application.ForceClose, r *rules.Repository) *Server {
+func New(c *ConfigTCP, r *rules.Repository) *Server {
 	return &Server{
 		servers: make(map[string]*dns.Server),
 		conf:    c,
-		close:   f,
 		store:   r,
 	}
 }
 
-func (v *Server) Up() error {
+func (v *Server) Up(cx ctx.Context) error {
 	handler := dns.NewServeMux()
 	handler.HandleFunc(".", v.handler)
 
@@ -43,18 +41,25 @@ func (v *Server) Up() error {
 		return err
 	}
 
-	v.runServers()
+	v.runServers(cx)
 
 	return nil
 
 }
 
-func (v *Server) Down() (err error) {
+func (v *Server) Down(_ ctx.Context) (err error) {
 	for name, server := range v.servers {
 		if err := server.Shutdown(); err != nil && err != http.ErrServerClosed {
-			logger.Errorf("%s [%s]: %s", name, server.Addr, err.Error())
+			logger.WithFields(logger.Fields{
+				"err":  err.Error(),
+				"name": name,
+				"ip":   server.Addr,
+			}).Errorf("shutdown server")
 		} else {
-			logger.Infof("%s stop: %s", name, server.Addr)
+			logger.WithFields(logger.Fields{
+				"name": name,
+				"ip":   server.Addr,
+			}).Infof("shutdown server")
 		}
 
 	}
@@ -139,18 +144,25 @@ func (v *Server) tlsCertificate() (*tls.Certificate, error) {
 	return &cert, nil
 }
 
-func (v *Server) runServers() {
+func (v *Server) runServers(cx ctx.Context) {
 	for name, server := range v.servers {
 		server := server
 		name := name
 
+		logger.WithFields(logger.Fields{
+			"name": name,
+			"ip":   server.Addr,
+		}).Infof("start server")
+
 		go func(name string, srv *dns.Server) {
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Errorf("%s [%s]: %s", name, srv.Addr, err.Error())
-				v.close.Close()
+				logger.WithFields(logger.Fields{
+					"err":  err.Error(),
+					"name": name,
+					"ip":   srv.Addr,
+				}).Errorf("start server")
+				cx.Close()
 			}
 		}(name, server)
-
-		logger.Infof("%s start: %s", name, server.Addr)
 	}
 }

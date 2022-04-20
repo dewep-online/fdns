@@ -1,8 +1,9 @@
 package: fdns
 source: fdns
-version: 0.0.3
+version: '1:0.0.4'
 architecture:
   - amd64
+  - arm64
 maintainer: DewepOnline <deb@dewep.online>
 homepage: https://dewep.online/fdns.html
 description:
@@ -13,7 +14,7 @@ control:
   depends:
     - systemd
     - ca-certificates
-  build: scripts/build.sh %s
+  build: scripts/build.sh
   conffiles:
     - /etc/fdns/config.yaml
   preinst: scripts/preinst.sh
@@ -21,6 +22,6 @@ control:
   prerm: scripts/prerm.sh
   postrm: scripts/postrm.sh
 data:
-  build/bin/fdns_amd64: usr/bin/fdns
-  configs/config.yaml: etc/fdns/config.yaml
-  init/systemd/fdns.service: etc/systemd/system/fdns.service
+  usr/bin/fdns: build/bin/fdns_%arch%
+  etc/fdns/config.yaml: configs/config.yaml
+  etc/systemd/system/fdns.service: init/systemd/fdns.service

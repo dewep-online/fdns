@@ -1,32 +1,30 @@
 #!/bin/bash
 
-PRJROOT="$PWD"
-GOMAIN="$PWD/cmd/fdns"
-
-cd $PWD
-
-back() {
-  rm -rf $PRJROOT/build/bin/fdns_*
-
-  go generate ./...
-
-  GO111MODULE=on GOOS=linux GOARCH=amd64 go build -o $PRJROOT/build/bin/fdns_amd64 $GOMAIN
-  GO111MODULE=on GOOS=windows GOARCH=amd64 go build -o $PRJROOT/build/bin/fdns_windows64.exe $GOMAIN
-  GO111MODULE=on GOOS=darwin GOARCH=amd64 go build -o $PRJROOT/build/bin/fdns_macos $GOMAIN
-}
+#################################################
+source $(dirname "$0")/env.sh
+cd $ROOT
+dependencies
+#################################################
 
 front() {
   cd web && npm ci --no-delete --cache=/tmp && npm run build
 }
 
+# sudo apt install gcc-aarch64-linux-gnu
+
 case $1 in
-back)
-  back
+arm64)
+  rm -rf $ROOT/build/bin/fdns_$1 && \
+  GOBIN=$TOOLS_BIN go generate ./... && \
+  GO111MODULE=on CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
+      go build -a -o $ROOT/build/bin/fdns_$1 $GO_MAIN
   ;;
 front)
   front
   ;;
 *)
-  echo "front or back"
+  rm -rf $ROOT/build/bin/fdns_$1 && \
+  GOBIN=$TOOLS_BIN go generate ./... && \
+  GO111MODULE=on CGO_ENABLED=1 GOOS=linux GOARCH=$1 go build -o $ROOT/build/bin/fdns_$1 $GO_MAIN
   ;;
 esac

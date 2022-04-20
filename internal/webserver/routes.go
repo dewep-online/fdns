@@ -3,31 +3,27 @@ package webserver
 import (
 	"net/http"
 
-	"github.com/deweppro/go-http/web/routes"
+	"github.com/deweppro/go-http/pkg/routes"
 	"github.com/deweppro/go-logger"
 	"github.com/deweppro/go-static"
 )
 
-//go:generate static ./../../web/dist/fdns UI
+//go:generate static ./../../web/dist/fdns ui
 
-//UI static archive
-var UI = "H4sIAAAAAAAA/2IYBaNgFIxYAAgAAP//Lq+17wAEAAA="
+var ui static.Reader
 
 //Routes model
 type Routes struct {
-	cache *static.Cache
 	route *routes.Router
-	conf  *MiddlewareConfig
+	conf  *BaseConfig
 }
 
 //NewRoutes init router
-func NewRoutes(conf *MiddlewareConfig) (*Routes, *routes.Router) {
-	route := routes.NewRouter()
+func New(c *BaseConfig, r *routes.Router) *Routes {
 	return &Routes{
-		cache: static.New(),
-		route: route,
-		conf:  conf,
-	}, route
+		route: r,
+		conf:  c,
+	}
 }
 
 //Up startup api service
@@ -35,12 +31,8 @@ func (v *Routes) Up() error {
 	v.route.Global(routes.RecoveryMiddleware(logger.Default()))
 	v.route.Global(routes.ThrottlingMiddleware(v.conf.Middleware.Throttling))
 
-	if err := v.cache.FromBase64TarGZ(UI); err != nil {
-		return err
-	}
-
-	for _, file := range v.cache.List() {
-		logger.Debugf("static: %s", file)
+	for _, file := range ui.List() {
+		logger.WithFields(logger.Fields{"url": file}).Infof("add static route")
 		v.route.Route(file, v.Static, http.MethodGet)
 	}
 	v.route.Route("/", v.Static, http.MethodGet)
@@ -59,10 +51,13 @@ func (v *Routes) Static(w http.ResponseWriter, r *http.Request) {
 	switch filename {
 	case "", "/":
 		filename = "/index.html"
-		break
+	default:
 	}
 
-	if err := v.cache.Write(filename, w); err != nil {
-		logger.Errorf("static response: %s", err.Error())
+	if err := ui.ResponseWrite(w, filename); err != nil {
+		logger.WithFields(logger.Fields{
+			"err": err.Error(),
+			"url": filename,
+		}).Infof("static response")
 	}
 }

@@ -1,7 +1,9 @@
 #!/bin/bash
 
-cd $PWD
+#################################################
+source $(dirname "$0")/env.sh
+cd $ROOT
+dependencies
+#################################################
 
-go clean -testcache
-go test -v -race -run Unit ./...
-go test -v -race -run Integration ./...
+tests

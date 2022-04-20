@@ -1,22 +1,13 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 	"sort"
 
-	"github.com/deweppro/go-logger"
+	"github.com/deweppro/go-http/pkg/httputil/enc"
 )
 
 //go:generate easyjson
-
-//Index controller
-func (v *API) Index(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Hello")); err != nil {
-		logger.Errorf("Index: %s", err.Error())
-	}
-}
 
 //easyjson:json
 type (
@@ -39,8 +30,5 @@ func (v *API) CacheList(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Domain < list[j].Domain
 	})
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(list); err != nil {
-		logger.Errorf("cache-list: %s", err.Error())
-	}
+	enc.JSON(w, list)
 }

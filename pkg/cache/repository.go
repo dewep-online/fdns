@@ -4,23 +4,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/deweppro/go-app/application"
+	"github.com/deweppro/go-app/application/ctx"
 )
 
 type Repository struct {
 	data map[string]*Record
 	temp map[string]*Record
 
-	ctx *application.ForceClose
 	wg  sync.WaitGroup
 	mux sync.RWMutex
 }
 
-func New(ctx *application.ForceClose) *Repository {
+func New() *Repository {
 	return &Repository{
 		data: make(map[string]*Record),
 		temp: make(map[string]*Record),
-		ctx:  ctx,
 	}
 }
 
@@ -66,7 +64,7 @@ func (v *Repository) List(call func(name string, ip []string)) {
 	}
 }
 
-func (v *Repository) Up() error {
+func (v *Repository) Up(cx ctx.Context) error {
 	v.wg.Add(1)
 	go func() {
 		defer v.wg.Done()
@@ -76,13 +74,14 @@ func (v *Repository) Up() error {
 
 		for {
 			select {
-			case <-v.ctx.C.Done():
+			case <-cx.Done():
 				return
 
 			case t := <-timer.C:
+				ut := t.Unix()
 				v.mux.Lock()
 				for name, record := range v.data {
-					if record.GetTTL() <= t.Unix() {
+					if record.GetTTL() <= ut {
 						delete(v.data, name)
 					}
 				}
@@ -93,7 +92,7 @@ func (v *Repository) Up() error {
 	return nil
 }
 
-func (v *Repository) Down() error {
+func (v *Repository) Down(_ ctx.Context) error {
 	v.wg.Wait()
 	return nil
 }

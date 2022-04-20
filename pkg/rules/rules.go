@@ -6,11 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/deweppro/go-logger"
-
 	"github.com/dewep-online/fdns/pkg/httpcli"
-
 	"github.com/dewep-online/fdns/pkg/utils"
+	"github.com/deweppro/go-logger"
 )
 
 const (
@@ -115,18 +113,26 @@ func AdblockRules(data []string, setter HostSetter) {
 	for _, uri := range data {
 		code, b, err := cli.Call(http.MethodGet, uri, nil)
 		if err != nil {
-			logger.Warnf("adblock [%d] %s: %s", code, uri, err.Error())
+			logger.WithFields(logger.Fields{
+				"err":  err.Error(),
+				"code": code,
+				"url":  uri,
+			}).Errorf("adblock")
 			continue
 		}
 		if code != http.StatusOK {
-			logger.Warnf("adblock [%d] %s: %s", code, uri, err.Error())
+			logger.WithFields(logger.Fields{
+				"code": code,
+				"url":  uri,
+			}).Errorf("adblock")
 			continue
 		}
 
 		result := rex.FindAll(b, -1)
-		logger.Infof("adblock [%d] %s", len(result), uri)
 		for _, domain := range result {
 			setter.SetHostResolve(string(domain[2:len(domain)-1])+".", nil, nil, 0)
 		}
+
+		logger.WithFields(logger.Fields{"count": len(result), "url": uri}).Infof("adblock")
 	}
 }

@@ -1,11 +1,9 @@
 #!/bin/bash
 
-GO_FILES=$(find . -name '*.go' | grep -vE 'vendor|easyjson|static')
+#################################################
+source $(dirname "$0")/env.sh
+cd $ROOT
+dependencies
+#################################################
 
-
-cd $PWD
-
-go generate ./...
-goimports -w $GO_FILES
-go fmt ./...
-golangci-lint -v run ./...
+lints

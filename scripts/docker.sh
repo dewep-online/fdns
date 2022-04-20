@@ -1,6 +1,10 @@
 #!/bin/bash
 
-cd $PWD
+#################################################
+source $(dirname "$0")/env.sh
+cd $ROOT
+dependencies
+#################################################
 
 docker_up() {
   docker-compose -f deployments/docker-compose.yaml -p dev_fdns up
