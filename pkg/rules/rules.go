@@ -105,7 +105,7 @@ func QueryRules(data map[string]string, setter ResolveSetter) error {
 
 var (
 	cli = httpcli.New()
-	rex = regexp.MustCompile(`\|\|([a-z0-9-.]+)\^`)
+	rex = regexp.MustCompile(`(?m)^\|\|([a-z0-9-.]+)\^`)
 )
 
 func AdblockRules(data []string, setter HostSetter) {
