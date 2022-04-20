@@ -1,15 +1,15 @@
 package rules
 
 import (
-	"fmt"
 	"regexp"
-	"strings"
+	"sync"
+	"time"
+
+	"github.com/dewep-online/fdns/pkg/utils"
 
 	"github.com/dewep-online/fdns/pkg/blacklist"
 	"github.com/dewep-online/fdns/pkg/cache"
 	"github.com/dewep-online/fdns/pkg/dnscli"
-	"github.com/dewep-online/fdns/pkg/utils"
-	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
 
@@ -18,8 +18,8 @@ type Repository struct {
 	cache     *cache.Repository
 	cli       *dnscli.Client
 	blacklist *blacklist.Repository
-	resolve   RuleMap
-	regexp    RuleMap
+	resolve   []Resolver
+	mux       sync.RWMutex
 }
 
 func New(c *Config, r *cache.Repository, d *dnscli.Client, b *blacklist.Repository) *Repository {
@@ -28,155 +28,145 @@ func New(c *Config, r *cache.Repository, d *dnscli.Client, b *blacklist.Reposito
 		cache:     r,
 		cli:       d,
 		blacklist: b,
-		regexp:    make(RuleMap),
-		resolve:   make(RuleMap),
+		resolve:   make([]Resolver, 0),
 	}
 }
 
-func (o *Repository) Up() error {
-	for domain, ips := range o.conf.HostRules {
-		ip4, ip6 := utils.ParseIPs(ips)
-		o.cache.Set(
-			fmt.Sprintf("%s.", domain),
-			cache.Create(ip4, ip6, false),
-		)
+func (v *Repository) Up() error {
+	if err := HostRules(v.conf.HostRules, v); err != nil {
+		return err
+	}
+	if err := DNSRules(v.conf.DNSRules, v); err != nil {
+		return err
+	}
+	if err := RegexpRules(v.conf.RegExpRules, v); err != nil {
+		return err
+	}
+	if err := QueryRules(v.conf.QueryRules, v); err != nil {
+		return err
 	}
 
-	for domain, ips := range o.conf.DNSRules {
-		ip4, ip6 := utils.ParseIPs(ips)
-
-		domain = regexp.QuoteMeta(domain)
-		domain = strings.ReplaceAll(domain, "\\?", "?")
-		domain = strings.ReplaceAll(domain, "\\*", ".*")
-		domain = fmt.Sprintf("^.*%s\\.$", strings.Trim(domain, "^$"))
-
-		o.resolve[domain] = &Rule{
-			reg: regexp.MustCompile(domain),
-			ip4: utils.ValidateDNSs(ip4),
-			ip6: utils.ValidateDNSs(ip6),
-		}
-	}
-
-	for domain, ips := range o.conf.RegExpRules {
-		ip4, ip6 := utils.ParseIPs(ips)
-
-		domain = fmt.Sprintf("^%s\\.$", strings.Trim(domain, "^$"))
-
-		o.regexp[domain] = &Rule{
-			reg:    regexp.MustCompile(domain),
-			format: ips,
-			ip4:    ip4,
-			ip6:    ip6,
-		}
-	}
-
-	for domain, ips := range o.conf.QueryRules {
-		ip4, ip6 := utils.ParseIPs(ips)
-
-		domain = regexp.QuoteMeta(domain)
-		domain = strings.ReplaceAll(domain, "\\?", ".")
-		domain = strings.ReplaceAll(domain, "\\*", ".*")
-		domain = fmt.Sprintf("^%s\\.$", strings.Trim(domain, "^$"))
-
-		o.regexp[domain] = &Rule{
-			reg:    regexp.MustCompile(domain),
-			format: ips,
-			ip4:    ip4,
-			ip6:    ip6,
-		}
-	}
+	time.AfterFunc(time.Minute, func() {
+		AdblockRules(v.conf.AdblockRules, v)
+	})
 
 	return nil
 }
 
-func (o *Repository) Down() error {
+func (v *Repository) Down() error {
 	return nil
 }
 
-func (o *Repository) DNS(name string, m *dns.Msg) ([]dns.RR, error) {
+func (v *Repository) SetHostResolve(domain string, ip4, ip6 []string, ttl int64) {
+	v.cache.Set(domain, ip4, ip6, ttl)
+}
+
+func (v *Repository) SetRexResolve(format string, rx *regexp.Regexp, ip4, ip6 []string, tp uint) {
+	v.mux.Lock()
+	defer v.mux.Unlock()
+
+	v.resolve = append(v.resolve, Resolver{
+		reg:    rx,
+		format: format,
+		types:  tp,
+		ip4:    ip4,
+		ip6:    ip6,
+	})
+}
+
+func (v *Repository) Resolve(q dns.Question) []dns.RR {
 	var (
-		ips []string
-		rm  *dns.Msg
-		err error
+		tp        uint
+		ttl, ttl6 int64
+		ip4, ip6  []string
 	)
-	for _, item := range o.resolve {
-		ip4, ip6, ok := item.Match(name)
+
+	tp, ip4, ip6 = v.rxlookup(q.Name)
+	if tp == TypeNone || tp == TypeDNS {
+		ips := append(ip4, ip6...)
+		ttl, ip4 = v.nslookup(new(dns.Msg).SetQuestion(dns.Fqdn(q.Name), dns.TypeA), ips)
+		ttl6, ip6 = v.nslookup(new(dns.Msg).SetQuestion(dns.Fqdn(q.Name), dns.TypeAAAA), ips)
+
+		if len(ip4) > 0 || len(ip6) > 0 {
+			if ttl6 > ttl {
+				ttl = ttl6
+			}
+			if ttl > 0 {
+				ttl = time.Now().Add(time.Second * time.Duration(ttl)).Unix()
+			}
+			v.cache.Set(q.Name, ip4, ip6, ttl)
+		}
+	}
+
+	switch q.Qtype {
+	case dns.TypeA:
+		return utils.CreateA(q.Name, ip4)
+	case dns.TypeAAAA:
+		return utils.CreateAAAA(q.Name, ip6)
+	}
+
+	return nil
+}
+
+func (v *Repository) rxlookup(domain string) (uint, []string, []string) {
+	if vv := v.cache.Get(domain); vv != nil {
+		return TypeHost, vv.GetIP4(), vv.GetIP6()
+	}
+	v.mux.RLock()
+	defer v.mux.RUnlock()
+
+	for _, item := range v.resolve {
+		ip4, ip6, ok := item.Compile(domain)
+		if !ok {
+			ip4, ip6, ok = item.Match(domain)
+		}
 		if !ok {
 			continue
 		}
-		if len(ip6) > 0 {
-			ips = append(ips, ip6...)
+		if item.types == TypeRegexp {
+			v.cache.Set(domain, ip4, ip6, 0)
 		}
-		if len(ip4) > 0 {
-			ips = append(ips, ip4...)
-		}
+		return item.types, ip4, ip6
 	}
+	return TypeNone, nil, nil
+}
+
+func (v *Repository) nslookup(msg *dns.Msg, ips []string) (int64, []string) {
+	var (
+		resp *dns.Msg
+		err  error
+	)
 	if len(ips) > 0 {
-		rm, err = o.cli.Exchange(m, ips)
+		resp, err = v.cli.Exchange(msg, ips)
 	} else {
-		rm, err = o.cli.ExchangeRandomDNS(m)
+		resp, err = v.cli.ExchangeRandomDNS(msg)
 	}
 	if err != nil {
-		return nil, err
+		return 0, nil
 	}
-	return o.nslookup(name, rm), nil
-}
 
-func (o *Repository) GetA(name string) ([]dns.RR, error) {
-	c := o.cache.Get(name)
-	if c == nil {
-		if c = o.compileRegexp(name); c == nil {
-			return nil, utils.ErrCacheNotFound
-		}
-	}
-	if !c.HasIP4() {
-		return nil, utils.ErrEmptyIP
-	}
-	return utils.CreateA(name, c.GetIP4()), nil
-}
-
-func (o *Repository) GetAAAA(name string) ([]dns.RR, error) {
-	c := o.cache.Get(name)
-	if c == nil {
-		if c = o.compileRegexp(name); c == nil {
-			return nil, utils.ErrCacheNotFound
-		}
-	}
-	if !c.HasIP6() {
-		return nil, utils.ErrEmptyIP
-	}
-	return utils.CreateAAAA(name, c.GetIP6()), nil
-}
-
-func (o *Repository) compileRegexp(name string) (rip *cache.Item) {
-	for reg, item := range o.regexp {
-		if ip4, ip6, ok := item.Compile(name); ok {
-			rip = cache.Create(ip4, ip6, false)
-			o.cache.Set(name, rip)
-
-			logger.Infof("rules match: DOMAIN: %s REGEXP: %s IPv4: %s IPv6: %s", name, reg, ip4, ip6)
-			break
-		}
-	}
-	return
-}
-
-func (o *Repository) nslookup(name string, rm *dns.Msg) (answer []dns.RR) {
-	for _, answ := range rm.Answer {
-		switch answ.(type) {
+	var (
+		ip  []string
+		ttl uint32
+	)
+	for _, vv := range resp.Answer {
+		switch vv.(type) {
 		case *dns.A:
-			if o.blacklist.Has(answ.(*dns.A).A) {
+			if v.blacklist.Has(vv.(*dns.A).A) {
 				continue
 			}
-			o.cache.Update(name, []string{answ.(*dns.A).A.String()}, nil)
+			ip = append(ip, vv.(*dns.A).A.String())
 		case *dns.AAAA:
-			if o.blacklist.Has(answ.(*dns.AAAA).AAAA) {
+			if v.blacklist.Has(vv.(*dns.AAAA).AAAA) {
 				continue
 			}
-			o.cache.Update(name, nil, []string{answ.(*dns.AAAA).AAAA.String()})
+			ip = append(ip, vv.(*dns.AAAA).AAAA.String())
 		}
 
-		answer = append(answer, answ)
+		if ttl < vv.Header().Ttl {
+			ttl = vv.Header().Ttl
+		}
 	}
-	return
+
+	return time.Now().Add(time.Second * time.Duration(ttl)).Unix(), ip
 }

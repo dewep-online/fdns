@@ -8,7 +8,6 @@ import (
 	"github.com/dewep-online/fdns/internal/webserver"
 	"github.com/dewep-online/fdns/pkg"
 	"github.com/deweppro/go-app/application"
-	"github.com/deweppro/go-http/web/debug"
 	"github.com/deweppro/go-logger"
 )
 
@@ -21,14 +20,12 @@ func main() {
 		Logger(logger.Default()).
 		ConfigFile(
 			*configFile,
-			&debug.Config{},
 			pkg.Config,
 			webserver.Config,
 			dnsserver.Config,
 			api.Config,
 		).
 		Modules(
-			debug.New,
 			pkg.Module,
 			webserver.Module,
 			dnsserver.Module,

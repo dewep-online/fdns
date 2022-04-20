@@ -1,9 +1,22 @@
 package dnsserver
 
 type ConfigTCP struct {
-	Server Srv `yaml:"server"`
+	Srv Srv `yaml:"srv"`
+	DoT DoT `yaml:"dot"`
 }
 
 type Srv struct {
-	Addr string `yaml:"addr"`
+	Enable bool   `yaml:"enable"`
+	Addr   string `yaml:"addr"`
+}
+
+type DoT struct {
+	Enable bool   `yaml:"enable"`
+	Addr   string `yaml:"addr"`
+	Cert   Cert   `yaml:"cert"`
+}
+
+type Cert struct {
+	Public  string `yaml:"public"`
+	Private string `yaml:"private"`
 }

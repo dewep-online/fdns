@@ -2,9 +2,6 @@ package blacklist
 
 import (
 	"net"
-
-	"github.com/dewep-online/fdns/pkg/utils"
-	"github.com/miekg/dns"
 )
 
 type Repository struct {
@@ -19,38 +16,31 @@ func New(c *Config) *Repository {
 	}
 }
 
-func (o *Repository) Up() error {
-	for _, ip := range o.conf.BlackListIP {
+func (v *Repository) Up() error {
+	for _, ip := range v.conf.BlackListIP {
 		if _, n, err := net.ParseCIDR(ip); err == nil {
-			o.blacklistIPNet = append(o.blacklistIPNet, n)
+			v.blacklistIPNet = append(v.blacklistIPNet, n)
 		} else {
-			o.blacklistIP = append(o.blacklistIP, net.ParseIP(ip))
+			v.blacklistIP = append(v.blacklistIP, net.ParseIP(ip))
 		}
 	}
 	return nil
 }
 
-func (o *Repository) Down() error {
+func (v *Repository) Down() error {
 	return nil
 }
 
-func (o *Repository) Has(ip net.IP) bool {
-	for _, item := range o.blacklistIP {
+func (v *Repository) Has(ip net.IP) bool {
+	for _, item := range v.blacklistIP {
 		if item.Equal(ip) {
 			return true
 		}
 	}
-	for _, item := range o.blacklistIPNet {
+	for _, item := range v.blacklistIPNet {
 		if item.Contains(ip) {
 			return true
 		}
 	}
 	return false
-}
-
-func (o *Repository) BlackHole(name string) ([]dns.RR, error) {
-	if len(o.conf.BlackHoleIP) == 0 {
-		return nil, utils.ErrEmptyIP
-	}
-	return utils.CreateA(name, []string{o.conf.BlackHoleIP}), nil
 }

@@ -4,9 +4,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"time"
-
-	"github.com/deweppro/go-app/application"
 )
 
 var (
@@ -35,7 +32,7 @@ func ValidateDNSs(list []string) (result []string) {
 	return
 }
 
-func ParseIPs(data string) (ip4, ip6 []string) {
+func DecodeIPs(data string) (ip4, ip6 []string) {
 	list := strings.Split(data, ",")
 	for _, host := range list {
 		host = strings.TrimSpace(host)
@@ -60,15 +57,6 @@ func ParseIPs(data string) (ip4, ip6 []string) {
 	return
 }
 
-func ReTry(count int, cb func() error) error {
-	var err error
-	for i := 0; i < count; i++ {
-		if er := cb(); er != nil {
-			err = application.WrapErrors(err, er, "retry")
-			<-time.After(time.Millisecond * 100)
-			continue
-		}
-		break
-	}
-	return err
+func EncodeIPs(ip4, ip6 []string) string {
+	return strings.Join(append(ip4, ip6...), ", ")
 }

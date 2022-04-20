@@ -1,0 +1,61 @@
+env: dev
+
+log: /dev/stdout
+level: 3
+
+http:
+  addr: 0.0.0.0:10053
+debug:
+  addr: 0.0.0.0:12053
+
+srv:
+  enable: true
+  addr: 0.0.0.0:8053
+dot:
+  enable: false
+  addr: 0.0.0.0:8853
+  cert:
+    public: ./public.pem
+    private: ./private.pem
+
+middleware:
+  throttling: 300
+
+blacklistip:
+  - 127.0.0.1
+  - 10.0.0.0/24
+
+dns:
+  - 1.1.1.1
+  - "1.0.0.1:53"
+
+dump-rules: ./dump.txt
+
+adblock-rules:
+  - https://filters.adtidy.org/extension/ublock/filters/2_without_easylist.txt
+  - https://easylist.to/easylist/easylist.txt
+  - https://filters.adtidy.org/extension/ublock/filters/11.txt
+  - https://easylist.to/easylist/easyprivacy.txt
+  - https://filters.adtidy.org/extension/ublock/filters/17.txt
+  - https://filters.adtidy.org/extension/ublock/filters/3.txt
+  - https://cdn.statically.io/gh/uBlockOrigin/uAssets/master/filters/badware.txt
+  - https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt
+  - https://filters.adtidy.org/extension/ublock/filters/4.txt
+  - https://filters.adtidy.org/extension/ublock/filters/14.txt
+  - https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt
+
+dns-rules:
+  "example-ns.com": "8.8.8.8, [2001:4860:4860::8888]:53"
+
+host-rules:
+  "example-host.com": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "example-host2.com": ""
+
+regexp-rules:
+  '.*\.example-regexp\.com': "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com': "$1.$2.$3.$4"
+  '(\d+)-(\d+)-(\d+)-(\d+)\.example2\.com': ""
+
+query-rules:
+  "ex?mple.*": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+  "ex?mple2.*": ""

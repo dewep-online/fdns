@@ -33,12 +33,23 @@ func (o *Client) ExchangeRandomDNS(msg *dns.Msg) (*dns.Msg, error) {
 	return o.Exchange(msg, o.ips)
 }
 
-func (o *Client) Exchange(msg *dns.Msg, addrs []string) (resp *dns.Msg, err error) {
-	var mq, mr []string
+func (o *Client) Exchange(msg *dns.Msg, addrs []string) (*dns.Msg, error) {
+	var (
+		mq, mr []string
+		resp   *dns.Msg
+		err    error
+	)
 
 	for _, ns := range addrs {
-		resp, _, err = o.cli.Exchange(msg, ns)
-		if err != nil {
+
+		if resp, _, err = o.cli.Exchange(msg, ns); err != nil {
+
+			logger.WithFields(logger.Fields{
+				"ns":  ns,
+				"q":   strings.Join(mq, ","),
+				"err": err.Error(),
+			}).Errorf("receive ip")
+
 			continue
 		}
 
@@ -50,18 +61,20 @@ func (o *Client) Exchange(msg *dns.Msg, addrs []string) (resp *dns.Msg, err erro
 			mr = append(mr, a.String())
 		}
 
-		logger.Infof("reverse: NS: %s QUERY: %s RESPONSE: %s",
-			ns, strings.Join(mq, ","), strings.Join(mr, ","))
+		logger.WithFields(logger.Fields{
+			"ns": ns,
+			"q":  strings.Join(mq, ","),
+			"a":  strings.Join(mr, ","),
+		}).Infof("receive ip")
 
 		break
 	}
 
-	if err != nil {
-		logger.Infof("reverse: NS: %s QUERY: %s ERROR: %s",
-			addrs, strings.Join(mq, ","), err.Error())
+	if resp == nil && err == nil {
+		return nil, utils.ErrEmptyIP
 	}
 
-	return
+	return resp, nil
 }
 
 func (o *Client) Up() error {
@@ -72,11 +85,16 @@ func (o *Client) Up() error {
 	o.ips = make([]string, 0)
 
 	for _, ip := range list {
-		logger.Infof("add dns: %s", ip)
+		logger.WithFields(logger.Fields{
+			"ip": ip,
+		}).Infof("add ns")
 		o.ips = append(o.ips, ip)
 
 		if _, _, err := o.cli.Exchange(msg, ip); err != nil {
-			logger.Errorf("error dns: [%s] %s", ip, err.Error())
+			logger.WithFields(logger.Fields{
+				"err": err.Error(),
+				"ip":  ip,
+			}).Errorf("add ns")
 		}
 	}
 
