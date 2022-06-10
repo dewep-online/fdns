@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/deweppro/go-app v1.5.1
 	github.com/deweppro/go-errors v0.0.4
-	github.com/deweppro/go-http v1.4.1
+	github.com/deweppro/go-http v1.4.2
 	github.com/deweppro/go-logger v1.3.0
 	github.com/deweppro/go-static v1.1.1
 	github.com/mailru/easyjson v0.7.7
