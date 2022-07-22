@@ -9,7 +9,7 @@ require (
 	github.com/deweppro/go-logger v1.3.0
 	github.com/deweppro/go-static v1.1.1
 	github.com/mailru/easyjson v0.7.7
-	github.com/miekg/dns v1.1.48
+	github.com/miekg/dns v1.1.50
 )
 
 require (
