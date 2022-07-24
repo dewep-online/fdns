@@ -1,0 +1,40 @@
+<h2>Adblock Domains <span class="badge rounded-pill bg-danger">{{domains.length}}</span></h2>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="input-group mb-2">
+            <div class="input-group-prepend">
+                <div class="input-group-text">Filter</div>
+            </div>
+            <input type="text" class="form-control" [(ngModel)]="filter">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" (click)="reload()">
+                    <span class="oi oi-reload"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+
+        <div class="container-fluid" *ngFor="let uri of uris">
+
+            <div class="uri">{{uri.uri}}</div>
+
+            <div *ngFor="let domain of domains|domainFilter:uri:filter"
+                 class="card d-inline-flex align-content-stretch flex-wrap m-1 clickable bg-secondary" style="width: 15rem;"
+                 (dblclick)="changeActive(domain.domain, domain.active)"
+                 [ngClass]="{'bg-secondary': !domain.active}"
+            >
+                <div class="card-body">
+                    <span class="card-title">{{domain.domain}}</span>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+</div>

@@ -39,12 +39,12 @@ lints() {
 
 tests() {
     go clean -testcache
-    go test -v -race -run Integration ./...
+    go test -v -race ./...
 
-    if [ "$COVERALLS_TOKEN" == "dev" ]; then
-        go test -v -race -run Unit ./...
-    else
-        go test -v -race -run Unit -covermode=atomic -coverprofile=coverage.out ./...
-        $TOOLS_BIN/goveralls -coverprofile=coverage.out -repotoken $COVERALLS_TOKEN
-    fi
+#    if [ "$COVERALLS_TOKEN" == "dev" ]; then
+#        go test -v -race -run Unit ./...
+#    else
+#        go test -v -race -run Unit -covermode=atomic -coverprofile=coverage.out ./...
+#        $TOOLS_BIN/goveralls -coverprofile=coverage.out -repotoken $COVERALLS_TOKEN
+#    fi
 }

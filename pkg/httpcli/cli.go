@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/deweppro/go-errors"
 )
 
 type Client struct {
@@ -34,7 +34,7 @@ func New() *Client {
 func (v *Client) Call(method, uri string, body []byte) (int, []byte, error) {
 	req, err := http.NewRequest(method, uri, bytes.NewReader(body))
 	if err != nil {
-		return 0, nil, errors.Wrap(err, "create request")
+		return 0, nil, errors.WrapMessage(err, "create request")
 	}
 	req.Header.Set("Connection", "keep-alive")
 	resp, err := v.cli.Do(req)

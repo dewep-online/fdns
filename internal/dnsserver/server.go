@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/deweppro/go-app/application/ctx"
+
 	"github.com/dewep-online/fdns/pkg/rules"
-	"github.com/deweppro/go-app/application"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
@@ -18,20 +19,18 @@ type (
 		conf    *ConfigTCP
 		servers map[string]*dns.Server
 		store   *rules.Repository
-		close   *application.ForceClose
 	}
 )
 
-func New(c *ConfigTCP, f *application.ForceClose, r *rules.Repository) *Server {
+func New(c *ConfigTCP, r *rules.Repository) *Server {
 	return &Server{
 		servers: make(map[string]*dns.Server),
 		conf:    c,
-		close:   f,
 		store:   r,
 	}
 }
 
-func (v *Server) Up() error {
+func (v *Server) Up(ctx ctx.Context) error {
 	handler := dns.NewServeMux()
 	handler.HandleFunc(".", v.handler)
 
@@ -43,13 +42,13 @@ func (v *Server) Up() error {
 		return err
 	}
 
-	v.runServers()
+	v.runServers(ctx)
 
 	return nil
 
 }
 
-func (v *Server) Down() (err error) {
+func (v *Server) Down(_ ctx.Context) (err error) {
 	for name, server := range v.servers {
 		if err := server.Shutdown(); err != nil && err != http.ErrServerClosed {
 			logger.Errorf("%s [%s]: %s", name, server.Addr, err.Error())
@@ -139,7 +138,7 @@ func (v *Server) tlsCertificate() (*tls.Certificate, error) {
 	return &cert, nil
 }
 
-func (v *Server) runServers() {
+func (v *Server) runServers(ctx ctx.Context) {
 	for name, server := range v.servers {
 		server := server
 		name := name
@@ -147,7 +146,7 @@ func (v *Server) runServers() {
 		go func(name string, srv *dns.Server) {
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logger.Errorf("%s [%s]: %s", name, srv.Addr, err.Error())
-				v.close.Close()
+				ctx.Close()
 			}
 		}(name, server)
 

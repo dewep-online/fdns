@@ -7,6 +7,7 @@ import (
 )
 
 type Resolver struct {
+	rule   string
 	reg    *regexp.Regexp
 	format string
 	types  uint

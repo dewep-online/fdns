@@ -1,26 +1,25 @@
 package cache
 
 import (
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/deweppro/go-app/application"
+	"github.com/deweppro/go-app/application/ctx"
 )
 
 type Repository struct {
-	data map[string]*Record
-	temp map[string]*Record
+	dyn map[string]*Record
+	fix map[string]*Record
 
-	ctx *application.ForceClose
 	wg  sync.WaitGroup
 	mux sync.RWMutex
 }
 
-func New(ctx *application.ForceClose) *Repository {
+func New() *Repository {
 	return &Repository{
-		data: make(map[string]*Record),
-		temp: make(map[string]*Record),
-		ctx:  ctx,
+		dyn: make(map[string]*Record),
+		fix: make(map[string]*Record),
 	}
 }
 
@@ -28,10 +27,10 @@ func (v *Repository) Get(name string) *Record {
 	v.mux.RLock()
 	defer v.mux.RUnlock()
 
-	if d, ok := v.data[name]; ok {
+	if d, ok := v.fix[name]; ok {
 		return d
 	}
-	if d, ok := v.temp[name]; ok {
+	if d, ok := v.dyn[name]; ok {
 		return d
 	}
 	return nil
@@ -43,30 +42,85 @@ func (v *Repository) Set(name string, ip4, ip6 []string, ttl int64) {
 
 	m := NewRecord(ip4, ip6, ttl)
 	if m.IsStatic() {
-		v.temp[name] = m
+		v.fix[name] = m
 	} else {
-		v.data[name] = m
+		v.dyn[name] = m
 	}
 }
 
-func (v *Repository) Del(name string) {
+func (v *Repository) DelDynamic(name string) {
 	v.mux.Lock()
 	defer v.mux.Unlock()
 
-	delete(v.data, name)
+	delete(v.dyn, name)
 }
 
-func (v *Repository) List(call func(name string, ip []string)) {
+func (v *Repository) DelFixed(name string) {
+	v.mux.Lock()
+	defer v.mux.Unlock()
+
+	delete(v.fix, name)
+}
+
+func (v *Repository) DelByCallback(call func(name string) bool) {
+	var result []string
+	v.mux.RLock()
+	for name, _ := range v.fix {
+		if call(name) {
+			result = append(result, name)
+		}
+	}
+	for name, _ := range v.dyn {
+		if call(name) {
+			result = append(result, name)
+		}
+	}
+	v.mux.RUnlock()
+
+	v.mux.Lock()
+	for _, name := range result {
+		delete(v.fix, name)
+		delete(v.dyn, name)
+	}
+	v.mux.Unlock()
+}
+
+func (v *Repository) Reset() {
+	v.mux.Lock()
+	defer v.mux.Unlock()
+
+	v.dyn = make(map[string]*Record)
+	v.fix = make(map[string]*Record)
+}
+
+func (v *Repository) List(dyn bool, filter string, call func(name string, ip []string, ttl string)) {
 	v.mux.RLock()
 	defer v.mux.RUnlock()
 
-	for name, vv := range v.data {
-		ip := vv.AllIPs()
-		call(name, ip)
+	now := time.Now()
+
+	fn := func(list map[string]*Record) {
+		for name, vv := range list {
+			if len(filter) > 2 && strings.Index(name, filter) == -1 {
+				continue
+			}
+			ip := vv.AllIPs()
+			var ttl string
+			if vv.ttl > 0 {
+				ttl = time.Unix(vv.ttl, 0).Sub(now).String()
+			}
+			call(strings.Trim(name, "."), ip, ttl)
+		}
+	}
+
+	if dyn {
+		fn(v.dyn)
+	} else {
+		fn(v.fix)
 	}
 }
 
-func (v *Repository) Up() error {
+func (v *Repository) Up(ctx ctx.Context) error {
 	v.wg.Add(1)
 	go func() {
 		defer v.wg.Done()
@@ -76,14 +130,14 @@ func (v *Repository) Up() error {
 
 		for {
 			select {
-			case <-v.ctx.C.Done():
+			case <-ctx.Done():
 				return
 
 			case t := <-timer.C:
 				v.mux.Lock()
-				for name, record := range v.data {
+				for name, record := range v.dyn {
 					if record.GetTTL() <= t.Unix() {
-						delete(v.data, name)
+						delete(v.dyn, name)
 					}
 				}
 				v.mux.Unlock()
@@ -93,7 +147,7 @@ func (v *Repository) Up() error {
 	return nil
 }
 
-func (v *Repository) Down() error {
+func (v *Repository) Down(_ ctx.Context) error {
 	v.wg.Wait()
 	return nil
 }

@@ -11,7 +11,7 @@ docker_up() {
 }
 
 docker_down() {
-  docker-compose -f deployments/docker-compose.yaml -p dev_fdns down
+  docker-compose -f deployments/docker-compose.yaml -p dev_urione down
 }
 
 case $1 in

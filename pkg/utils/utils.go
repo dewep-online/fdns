@@ -1,9 +1,15 @@
 package utils
 
 import (
+	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net"
+	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -59,4 +65,47 @@ func DecodeIPs(data string) (ip4, ip6 []string) {
 
 func EncodeIPs(ip4, ip6 []string) string {
 	return strings.Join(append(ip4, ip6...), ", ")
+}
+
+func Interval(ctx context.Context, interval time.Duration, call func(context.Context)) {
+	call(ctx)
+
+	go func() {
+		tick := time.NewTicker(interval)
+		defer tick.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				call(ctx)
+			}
+		}
+	}()
+}
+
+func StringError(err error) string {
+	if err == nil {
+		return "<nil>"
+	}
+	return err.Error()
+}
+
+func Tag(s string) string {
+	h := md5.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+var domainRex = regexp.MustCompile(`^(?i)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$`)
+
+func ValidateDomain(domain string) (string, error) {
+	domain = strings.TrimSpace(domain)
+	if !domainRex.MatchString(domain) {
+		return "", fmt.Errorf("invalid domain")
+	}
+	domain = strings.TrimRight(domain, ".")
+	domain = strings.ToLower(domain)
+	return domain + ".", nil
 }
