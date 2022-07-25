@@ -3,8 +3,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/deweppro/go-algorithms v1.2.0 h1:fBS+GNQaeSDSmvFWdmkKLcKXo2DhX5M0AJaCxEqGedY=
 github.com/deweppro/go-algorithms v1.2.0/go.mod h1:zYdfRdlpaXgdT36OgvdjH1qtTZFWEeBi3KUQmWltMPI=
-github.com/deweppro/go-app v1.5.3 h1:/8anw7+ngjtAmk2NKDd/+zFGB7WFmiXyYekym5kqd7U=
-github.com/deweppro/go-app v1.5.3/go.mod h1:rZ95OfFGvRnm5ndIJI+DOtoOuVrgy3NeQ2vwmbmi0Tk=
+github.com/deweppro/go-app v1.5.4 h1:Dqg6fk4lGP2z2NtlhmT5qdDpGuYwzvRMzsEpVgvnh68=
+github.com/deweppro/go-app v1.5.4/go.mod h1:rZ95OfFGvRnm5ndIJI+DOtoOuVrgy3NeQ2vwmbmi0Tk=
 github.com/deweppro/go-chan-pool v1.1.2 h1:mm+gvwAFB5NijCiJDSx9RqrB2AWTembzL9Rf6XTv4BI=
 github.com/deweppro/go-chan-pool v1.1.2/go.mod h1:6meJsORhraeyvJNPy4hx8xgBNjp2xx3KGB/d5Q5a/I4=
 github.com/deweppro/go-errors v0.0.4 h1:TW91LRqHAkUauDJ5lzz73LziANH7mjli1tyvtwzXRCM=
