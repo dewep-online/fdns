@@ -9,8 +9,8 @@ github.com/deweppro/go-chan-pool v1.1.2 h1:mm+gvwAFB5NijCiJDSx9RqrB2AWTembzL9Rf6
 github.com/deweppro/go-chan-pool v1.1.2/go.mod h1:6meJsORhraeyvJNPy4hx8xgBNjp2xx3KGB/d5Q5a/I4=
 github.com/deweppro/go-errors v0.0.4 h1:TW91LRqHAkUauDJ5lzz73LziANH7mjli1tyvtwzXRCM=
 github.com/deweppro/go-errors v0.0.4/go.mod h1:BLsNcxaHh1fjNl/o1TB69JwA8XueSk/Nszkvw4ZwI/I=
-github.com/deweppro/go-http v1.4.3 h1:bm4PY+SBoZ9KISdtrAx8rV/hKn6t+ggt5P12+hqlE3o=
-github.com/deweppro/go-http v1.4.3/go.mod h1:zta7HINyRd9nmSRtqxw6APOTXwDPBI42G9iZQwqtQVU=
+github.com/deweppro/go-http v1.4.4 h1:oXFGS99Z1pVV/IG1Reqx5IfQTT7VS0/Javrfp+x4kog=
+github.com/deweppro/go-http v1.4.4/go.mod h1:2PqU9DYKyUIVlwi3CnuvC67c77Il++8SMihVSuI6nV0=
 github.com/deweppro/go-logger v1.3.0 h1:KN6RQmb6IoNBxQ7zx7Y1AtptHeL//FRgvQyEF5PrcsE=
 github.com/deweppro/go-logger v1.3.0/go.mod h1:jxBBLyHmIvJ4erGUj5qeE6ir36ztyAL1pI+9GymOHVI=
 github.com/deweppro/go-static v1.1.1 h1:FMKScbEj/GWEqmjiOuBFTHph15kui79RQwyT9QxZjVE=
