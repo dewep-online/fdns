@@ -7,7 +7,7 @@ Group=root
 Restart=on-failure
 RestartSec=30s
 Type=simple
-ExecStart=/usr/bin/fdns --config=/etc/fdns/config.yaml
+ExecStart=/usr/bin/fdns run --config=/etc/fdns/config.yaml
 KillMode=process
 KillSignal=SIGTERM
 

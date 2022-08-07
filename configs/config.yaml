@@ -25,36 +25,7 @@ blacklistip:
   - 127.0.0.1
   - 10.0.0.0/24
 
-dns:
-  - 1.1.1.1
-  - "1.0.0.1:53"
-#  - "2606:4700:4700::1111"
-#  - "[2606:4700:4700::1001]:53"
+sqlite:
+  - file: /var/lib/fdns/data.sqlite
 
-dump-rules: /var/lib/fdns/dump.txt
-
-adblock-rules:
-  - https://filters.adtidy.org/extension/ublock/filters/2_without_easylist.txt
-  - https://easylist.to/easylist/easylist.txt
-  - https://filters.adtidy.org/extension/ublock/filters/11.txt
-  - https://easylist.to/easylist/easyprivacy.txt
-  - https://filters.adtidy.org/extension/ublock/filters/17.txt
-  - https://filters.adtidy.org/extension/ublock/filters/3.txt
-  - https://cdn.statically.io/gh/uBlockOrigin/uAssets/master/filters/badware.txt
-  - https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt
-  - https://filters.adtidy.org/extension/ublock/filters/4.txt
-  - https://filters.adtidy.org/extension/ublock/filters/14.txt
-  - https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt
-
-dns-rules:
-#  "example-ns.com": "8.8.8.8, [2001:4860:4860::8888]:53"
-
-host-rules:
-#  "example-host.com": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
-
-regexp-rules:
-#  '.*\.example-regexp\.com': "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
-#  '(\d+)-(\d+)-(\d+)-(\d+)\.example\.com': "$1.$2.$3.$4"
-
-query-rules:
-#  "ex?mple.*": "255.255.255.255, 0:0:0:0:0:ffff:ffff:ffff"
+adblock-rules: https://fdns.dewep.online/adblock-rules.json

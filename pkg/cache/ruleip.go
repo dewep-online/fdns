@@ -1,5 +1,7 @@
 package cache
 
+import "strings"
+
 type Record struct {
 	ip4 map[string]struct{}
 	ip6 map[string]struct{}
@@ -62,4 +64,15 @@ func (v *Record) AllIPs() []string {
 		vv = append(vv, ip)
 	}
 	return vv
+}
+
+func (v *Record) AllIPsString() string {
+	vv := make([]string, 0, len(v.ip4)+len(v.ip6))
+	for ip := range v.ip4 {
+		vv = append(vv, ip)
+	}
+	for ip := range v.ip6 {
+		vv = append(vv, ip)
+	}
+	return strings.Join(vv, ", ")
 }

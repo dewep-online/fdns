@@ -41,6 +41,9 @@ func (v *Client) Call(method, uri string, body []byte) (int, []byte, error) {
 	if err != nil {
 		return 0, nil, fmt.Errorf("make request: %w", err)
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	b, err := ioutil.ReadAll(resp.Body)
-	return resp.StatusCode, b, errors.Wrap(err, resp.Body.Close())
+	return resp.StatusCode, b, err
 }

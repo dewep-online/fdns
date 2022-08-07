@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dewep-online/fdns/pkg/rules"
 	"github.com/deweppro/go-app/application/ctx"
+
+	"github.com/dewep-online/fdns/pkg/rules"
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
@@ -29,7 +30,7 @@ func New(c *ConfigTCP, r *rules.Repository) *Server {
 	}
 }
 
-func (v *Server) Up(cx ctx.Context) error {
+func (v *Server) Up(ctx ctx.Context) error {
 	handler := dns.NewServeMux()
 	handler.HandleFunc(".", v.handler)
 
@@ -41,7 +42,7 @@ func (v *Server) Up(cx ctx.Context) error {
 		return err
 	}
 
-	v.runServers(cx)
+	v.runServers(ctx)
 
 	return nil
 
@@ -50,16 +51,9 @@ func (v *Server) Up(cx ctx.Context) error {
 func (v *Server) Down(_ ctx.Context) (err error) {
 	for name, server := range v.servers {
 		if err := server.Shutdown(); err != nil && err != http.ErrServerClosed {
-			logger.WithFields(logger.Fields{
-				"err":  err.Error(),
-				"name": name,
-				"ip":   server.Addr,
-			}).Errorf("shutdown server")
+			logger.Errorf("%s [%s]: %s", name, server.Addr, err.Error())
 		} else {
-			logger.WithFields(logger.Fields{
-				"name": name,
-				"ip":   server.Addr,
-			}).Infof("shutdown server")
+			logger.Infof("%s stop: %s", name, server.Addr)
 		}
 
 	}
@@ -144,25 +138,18 @@ func (v *Server) tlsCertificate() (*tls.Certificate, error) {
 	return &cert, nil
 }
 
-func (v *Server) runServers(cx ctx.Context) {
+func (v *Server) runServers(ctx ctx.Context) {
 	for name, server := range v.servers {
 		server := server
 		name := name
 
-		logger.WithFields(logger.Fields{
-			"name": name,
-			"ip":   server.Addr,
-		}).Infof("start server")
-
 		go func(name string, srv *dns.Server) {
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.WithFields(logger.Fields{
-					"err":  err.Error(),
-					"name": name,
-					"ip":   srv.Addr,
-				}).Errorf("start server")
-				cx.Close()
+				logger.Errorf("%s [%s]: %s", name, srv.Addr, err.Error())
+				ctx.Close()
 			}
 		}(name, server)
+
+		logger.Infof("%s start: %s", name, server.Addr)
 	}
 }

@@ -1,11 +1,11 @@
 package: fdns
 source: fdns
-version: '1:0.0.4'
+version: '1:0.0.5'
 architecture:
   - amd64
   - arm64
 maintainer: DewepOnline <deb@dewep.online>
-homepage: https://dewep.online/fdns.html
+homepage: https://www.dewep.online/products/fdns
 description:
   - Filter DNS
 section: web
@@ -14,9 +14,11 @@ control:
   depends:
     - systemd
     - ca-certificates
+    - sqlite3
   build: scripts/build.sh
   conffiles:
     - /etc/fdns/config.yaml
+    - /var/lib/fdns/data.sqlite
   preinst: scripts/preinst.sh
   postinst: scripts/postinst.sh
   prerm: scripts/prerm.sh

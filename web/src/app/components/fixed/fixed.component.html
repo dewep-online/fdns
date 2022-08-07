@@ -1,0 +1,73 @@
+<h2>Rules</h2>
+
+<div class="row mt-3">
+    <div class="col-4">
+
+        <cdk-virtual-scroll-viewport class="list-group short-list" itemSize="50">
+            <li (click)="show(index)"
+                *cdkVirtualFor="let rule of list; let index = index"
+                [ngClass]="{'list-group-item-info': id === index}"
+                class="list-group-item">
+                [{{rule.types}}] {{rule.origin}}
+                <span [ngClass]="{'bg-info':rule.active, 'bg-danger':!rule.active}" class="badge">
+                        <span *ngIf="!rule.active">off</span>
+                        <span *ngIf="rule.active">on</span>
+                </span>
+            </li>
+        </cdk-virtual-scroll-viewport>
+
+        <hr>
+
+        <a (click)="add()" class="btn btn-sm btn-outline-secondary form-control">New</a>
+
+    </div>
+    <div class="col-8">
+
+        <div *ngFor="let rule of list|index:id" class="container-fluid">
+
+            <h2 class="mb-5 text-danger">
+                <span *ngIf="rule.origin.length > 0">{{rule.origin}}</span>
+                <span *ngIf="rule.origin.length === 0">{{rule.domain}}</span>
+            </h2>
+
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Rule</span>
+                <input [(ngModel)]="rule.domain" class="form-control" type="text">
+            </div>
+
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">IPs</span>
+                <input [(ngModel)]="rule.ips" class="form-control" type="text">
+            </div>
+
+            <div class="input-group input-group-sm mb-5">
+                <label class="input-group-text">Type</label>
+                <select [(ngModel)]="rule.types" [disabled]="rule.origin.length>0" class="form-select">
+                    <option selected value="">Choose...</option>
+                    <option value="host">Host</option>
+                    <option value="query">Query</option>
+                    <option value="dns">DNS</option>
+                    <option value="ns">NS</option>
+                </select>
+            </div>
+
+            <div class="row pt-5">
+                <div class="col-2">
+                    <a (click)="save(rule)" class="btn btn-sm btn-success form-control">Save</a>
+                </div>
+                <div class="col-2">
+                    <a (click)="active(rule)" class="btn btn-sm btn-dark form-control">
+                        <span *ngIf="rule.active">Off</span>
+                        <span *ngIf="!rule.active">On</span>
+                    </a>
+                </div>
+                <div class="col-6"></div>
+                <div class="col-2">
+                    <a (click)="del(rule)" class="btn btn-sm btn-danger form-control">Del</a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

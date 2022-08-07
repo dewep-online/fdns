@@ -5,5 +5,4 @@ if [ -f "/etc/systemd/system/fdns.service" ]; then
     systemctl disable fdns
 
     systemctl daemon-reload
-    systemctl reset-failed
 fi

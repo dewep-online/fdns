@@ -6,11 +6,13 @@
 *.out
 *.lock
 *.log
+*.sqlite
 
 .DS_Store
 .glide
 .idea
 .vscode
+.tools
 /vendor
 
 .angulardoc.json

@@ -3,15 +3,19 @@ package webserver
 import "github.com/deweppro/go-http/servers"
 
 type (
-	BaseConfig struct {
-		Middleware Middleware `yaml:"middleware"`
+	//MiddlewareConfig model
+	MiddlewareConfig struct {
+		Middleware ConfigItem `yaml:"middleware"`
 	}
-	Middleware struct {
+
+	//ConfigItem model
+	ConfigItem struct {
 		Throttling int64 `yaml:"throttling"`
 	}
-)
 
-type WebConfig struct {
-	Http  servers.Config `yaml:"http"`
-	Debug servers.Config `yaml:"debug"`
-}
+	//WebConfig model
+	WebConfig struct {
+		Http  servers.Config `yaml:"http"`
+		Debug servers.Config `yaml:"debug"`
+	}
+)
