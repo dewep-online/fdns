@@ -7,11 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dewep-online/fdns/pkg/database"
 	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-app/application/ctx"
-
-	"github.com/dewep-online/fdns/pkg/database"
-
 	"github.com/deweppro/go-logger"
 	"github.com/miekg/dns"
 )
@@ -71,6 +69,12 @@ func (o *Client) UpgradeNS(ctx context.Context) {
 		}
 		logger.Infof("set dns: %s", ip)
 		result = append(result, ip)
+	}
+
+	if len(result) == 0 {
+		ips = utils.ValidateDNSs(defaultDNS)
+		result = append(result, ips...)
+		logger.Infof("set default dns: %+v", ips)
 	}
 
 	o.mux.Lock()

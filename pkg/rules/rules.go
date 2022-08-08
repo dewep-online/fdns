@@ -3,9 +3,12 @@ package rules
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/deweppro/go-logger"
 
@@ -125,6 +128,18 @@ var (
 )
 
 func LoadAdblockRules(uri string) []string {
+	utils.Retry(5, time.Second*5, func() error {
+		u, err := url.Parse(uri)
+		if err != nil {
+			logger.Warnf("adblock-rules parse base url [%s]: %s", uri, utils.StringError(err))
+			return err
+		}
+		_, err = net.LookupIP(u.Host)
+		if err != nil {
+			logger.Warnf("adblock-rules nslookup [%s]: %s", u.Host, utils.StringError(err))
+		}
+		return err
+	})
 	code, b, err := cli.Call(http.MethodGet, uri, nil)
 	if err != nil || code != http.StatusOK {
 		logger.Warnf("adblock-rules [%d] %s: %s", code, uri, utils.StringError(err))

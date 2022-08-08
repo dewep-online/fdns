@@ -65,12 +65,12 @@ func (v *Repository) DelFixed(name string) {
 func (v *Repository) DelByCallback(call func(name string) bool) {
 	var result []string
 	v.mux.RLock()
-	for name, _ := range v.fix {
+	for name := range v.fix {
 		if call(name) {
 			result = append(result, name)
 		}
 	}
-	for name, _ := range v.dyn {
+	for name := range v.dyn {
 		if call(name) {
 			result = append(result, name)
 		}

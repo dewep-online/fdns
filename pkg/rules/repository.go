@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"sync"
 	"time"
@@ -47,21 +46,6 @@ func New(c *Config, r *cache.Repository, d *dnscli.Client, b *blacklist.Reposito
 func (v *Repository) Up(ctx ctx.Context) error {
 	var timestamp int64
 
-	utils.Interval(ctx.Context(), time.Hour*24, func(ctx context.Context) {
-		uris := LoadAdblockRules(v.conf.AdblockRules)
-		AdblockRules(uris, func(uri string, domains []string) {
-			tag, err := v.db.SetBlacklistURI(ctx, uri)
-			if err != nil {
-				logger.Warnf("adblock-uri [%s]: %s", uri, utils.StringError(err))
-				return
-			}
-			if err = v.db.SetBlacklistDomain(ctx, tag, domains); err != nil {
-				logger.Warnf("adblock-uri [%s]: %s", uri, utils.StringError(err))
-				return
-			}
-		})
-	})
-
 	utils.Interval(ctx.Context(), time.Minute*5, func(ctx context.Context) {
 		err := errors.Wrap(
 			v.db.GetRulesMap(ctx, database.DNS, timestamp, func(m map[string]string) error {
@@ -92,6 +76,21 @@ func (v *Repository) Up(ctx ctx.Context) error {
 		timestamp = time.Now().Unix()
 	})
 
+	go utils.Interval(ctx.Context(), time.Hour*24, func(ctx context.Context) {
+		uris := LoadAdblockRules(v.conf.AdblockRules)
+		AdblockRules(uris, func(uri string, domains []string) {
+			tag, err := v.db.SetBlacklistURI(ctx, uri)
+			if err != nil {
+				logger.Warnf("adblock-uri [%s]: %s", uri, utils.StringError(err))
+				return
+			}
+			if err = v.db.SetBlacklistDomain(ctx, tag, domains); err != nil {
+				logger.Warnf("adblock-uri [%s]: %s", uri, utils.StringError(err))
+				return
+			}
+		})
+	})
+
 	return nil
 }
 
@@ -104,14 +103,18 @@ func (v *Repository) SetHostResolve(domain string, ip4, ip6 []string, ttl int64)
 }
 
 func (v *Repository) ReplaceRexResolve(t database.Types, o, n, ips string) {
+	var err error
 	m := map[string]string{n: ips}
 	switch t {
 	case database.DNS:
-		_ = DNSRules(m, v)
+		err = DNSRules(m, v)
 	case database.Regex:
-		_ = RegexpRules(m, v)
+		err = RegexpRules(m, v)
 	case database.Query:
-		_ = QueryRules(m, v)
+		err = QueryRules(m, v)
+	}
+	if err != nil {
+		logger.Warnf("replace rules [%s]: %s", string(t), utils.StringError(err))
 	}
 
 	v.mux.Lock()
@@ -124,7 +127,6 @@ func (v *Repository) ReplaceRexResolve(t database.Types, o, n, ips string) {
 	if ok {
 		v.cache.DelByCallback(func(name string) bool {
 			_, _, ok = r.Match(name)
-			fmt.Println(r.rule, name, ok)
 			return ok
 		})
 	}
