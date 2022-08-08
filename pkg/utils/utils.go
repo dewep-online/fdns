@@ -4,19 +4,19 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/deweppro/go-errors"
 )
 
 var (
-	ErrInvalidIP     = errors.New("invalid ip")
-	ErrEmptyDNSList  = errors.New("dns list is empty")
-	ErrEmptyIP       = errors.New("ip is empty")
-	ErrCacheNotFound = errors.New("cache is not found")
+	ErrInvalidIP = errors.New("invalid ip")
 )
 
 func ValidateDNS(ip string) (string, error) {
@@ -108,4 +108,22 @@ func ValidateDomain(domain string) (string, error) {
 	domain = strings.TrimRight(domain, ".")
 	domain = strings.ToLower(domain)
 	return domain + ".", nil
+}
+
+func Retry(count int, ttl time.Duration, call func() error) {
+	for i := 0; i < count; i++ {
+		err := call()
+		if err != nil {
+			time.Sleep(ttl)
+			continue
+		}
+		return
+	}
+	return
+}
+
+func ReadClose(r io.ReadCloser) ([]byte, error) {
+	b, err := ioutil.ReadAll(r)
+	err = errors.Wrap(err, r.Close())
+	return b, err
 }

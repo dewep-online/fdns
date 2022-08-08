@@ -3,11 +3,11 @@ package httpcli
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/dewep-online/fdns/pkg/utils"
 	"github.com/deweppro/go-errors"
 )
 
@@ -41,9 +41,6 @@ func (v *Client) Call(method, uri string, body []byte) (int, []byte, error) {
 	if err != nil {
 		return 0, nil, fmt.Errorf("make request: %w", err)
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err := ioutil.ReadAll(resp.Body)
-	return resp.StatusCode, b, err
+	b, err0 := utils.ReadClose(resp.Body)
+	return resp.StatusCode, b, err0
 }
