@@ -1,13 +1,14 @@
 package utils_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/dewep-online/fdns/pkg/utils"
 )
 
-func TestParseIPs(t *testing.T) {
+func TestUnit_ParseIPs(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    string
@@ -31,7 +32,7 @@ func TestParseIPs(t *testing.T) {
 	}
 }
 
-func TestValidateDNS(t *testing.T) {
+func TestUnit_ValidateDNS(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
@@ -71,7 +72,7 @@ func TestValidateDNS(t *testing.T) {
 	}
 }
 
-func TestEncodeIPs(t *testing.T) {
+func TestUnit_EncodeIPs(t *testing.T) {
 	type args struct {
 		ip4 []string
 		ip6 []string
@@ -112,5 +113,64 @@ func TestEncodeIPs(t *testing.T) {
 				t.Errorf("EncodeIPs() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestUnit_DomainLevel(t *testing.T) {
+	type args struct {
+		s     string
+		level int
+	}
+	tests := []struct {
+		args args
+		want string
+	}{
+		{
+			args: args{
+				s:     "www.domain.ltd",
+				level: 1,
+			},
+			want: "ltd",
+		},
+		{
+			args: args{
+				s:     "www.domain.ltd",
+				level: 2,
+			},
+			want: "domain.ltd",
+		},
+		{
+			args: args{
+				s:     "www.domain.ltd",
+				level: 10,
+			},
+			want: "www.domain.ltd",
+		},
+		{
+			args: args{
+				s:     "www.domain.ltd.",
+				level: 1,
+			},
+			want: "ltd.",
+		},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
+			if got := utils.DomainLevel(tt.args.s, tt.args.level); got != tt.want {
+				t.Errorf("DomainLevel() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func BenchmarkDomainLevel(b *testing.B) {
+	domain := "www.domain.ltd."
+	expected := "domain.ltd."
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if got := utils.DomainLevel(domain, 2); got != expected {
+			b.Errorf("DomainLevel() = %v, want %v", got, expected)
+		}
 	}
 }

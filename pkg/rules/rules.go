@@ -10,11 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deweppro/go-logger"
-
 	"github.com/dewep-online/fdns/pkg/httpcli"
-
 	"github.com/dewep-online/fdns/pkg/utils"
+	"github.com/deweppro/go-logger"
 )
 
 const (
@@ -124,7 +122,7 @@ func QueryRules(data map[string]string, setter ResolveSetter) error {
 
 var (
 	cli = httpcli.New()
-	rex = regexp.MustCompile(`\|\|([a-z0-9-.]+)\^\n`)
+	rex = regexp.MustCompile(`\|\|([a-z0-9-.]+)\^(\n|\r)`)
 )
 
 func LoadAdblockRules(uri string) []string {

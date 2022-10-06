@@ -1,6 +1,6 @@
 package: fdns
 source: fdns
-version: '1:0.0.6'
+version: '1:0.0.7'
 architecture:
   - amd64
   - arm64
