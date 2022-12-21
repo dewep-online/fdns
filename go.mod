@@ -3,7 +3,7 @@ module github.com/dewep-online/fdns
 go 1.17
 
 require (
-	github.com/deweppro/go-app v1.5.4
+	github.com/deweppro/go-app v1.6.2
 	github.com/deweppro/go-errors v0.0.4
 	github.com/deweppro/go-http v1.4.3
 	github.com/deweppro/go-logger v1.3.0
@@ -11,7 +11,7 @@ require (
 	github.com/deweppro/go-static v1.1.1
 	github.com/mailru/easyjson v0.7.7
 	github.com/miekg/dns v1.1.50
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
