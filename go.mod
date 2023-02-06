@@ -8,10 +8,10 @@ require (
 	github.com/deweppro/go-http v1.4.3
 	github.com/deweppro/go-logger v1.3.0
 	github.com/deweppro/go-orm v1.1.0
-	github.com/deweppro/go-static v1.1.1
+	github.com/deweppro/go-static v1.2.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/miekg/dns v1.1.50
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
