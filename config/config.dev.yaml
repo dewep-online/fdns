@@ -1,0 +1,25 @@
+env: dev
+level: 4
+log: /dev/stdout
+
+http:
+    main:
+        addr: 127.0.0.1:8080
+
+mysql:
+    - name: main
+      host: 127.0.0.1
+      port: 3306
+      schema: test_database
+      user: test
+      password: test
+      timezone: UTC
+      charset: utf8mb4
+      collation: utf8mb4_unicode_ci
+
+mysql_migrate:
+    - pool: main
+      dir: ./migrations
+
+dns:
+    addr: 0.0.0.0:8053

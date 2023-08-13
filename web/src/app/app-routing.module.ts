@@ -1,32 +1,16 @@
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
-import {AdblockComponent} from 'src/app/components/adblock/adblock.component';
-import {DynamicComponent} from 'src/app/components/dynamic/dynamic.component';
-import {FixedComponent} from 'src/app/components/fixed/fixed.component';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { ErrorComponent } from './pages/error/error.component';
+import { HomeComponent } from './pages/home/home.component';
 
 const routes: Routes = [
-    {
-        path: 'cache/dynamic',
-        component: DynamicComponent
-    },
-    {
-        path: 'cache/adblock',
-        component: AdblockComponent
-    },
-    {
-        path: 'cache/fixed',
-        component: FixedComponent
-    },
-    {
-        path: '',
-        redirectTo: 'cache/dynamic',
-        pathMatch: 'full',
-    },
+  { path:'home', component: HomeComponent },
+  { path: '', redirectTo: '/home', pathMatch: 'full' },
+  { path:'**', component: ErrorComponent },
 ];
 
 @NgModule({
-    imports: [RouterModule.forRoot(routes, {useHash: true})],
-    exports: [RouterModule]
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
+  exports: [RouterModule],
 })
-export class AppRoutingModule {
-}
+export class AppRoutingModule { }

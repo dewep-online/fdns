@@ -1,42 +1,32 @@
 package main
 
 import (
-	"github.com/dewep-online/fdns/internal/dnsserver"
-	"github.com/dewep-online/fdns/internal/webserver"
-	"github.com/dewep-online/fdns/pkg"
-	"github.com/deweppro/go-app/application"
-	"github.com/deweppro/go-app/console"
-	"github.com/deweppro/go-logger"
+	"github.com/osspkg/fdns/app/cache"
+	"github.com/osspkg/fdns/app/db"
+	"github.com/osspkg/fdns/app/dns"
+	"github.com/osspkg/fdns/app/dnscli"
+	"github.com/osspkg/fdns/app/httpcli"
+	"github.com/osspkg/fdns/app/resolver"
+	"github.com/osspkg/fdns/app/rules"
+	"github.com/osspkg/goppy"
+	"github.com/osspkg/goppy/plugins/database"
+	"github.com/osspkg/goppy/plugins/web"
 )
 
 func main() {
-	root := console.New("uri-one", "help uri-one")
-	root.AddCommand(appRun())
-	root.Exec()
-}
-
-func appRun() console.CommandGetter {
-	return console.NewCommand(func(setter console.CommandSetter) {
-		setter.Setup("run", "run application")
-		setter.Example("run --config=./config.yaml")
-		setter.Flag(func(f console.FlagsSetter) {
-			f.StringVar("config", "./config.yaml", "path to config file")
-		})
-		setter.ExecFunc(func(_ []string, config string) {
-			application.New().
-				Logger(logger.Default()).
-				ConfigFile(
-					config,
-					pkg.Config,
-					webserver.Config,
-					dnsserver.Config,
-				).
-				Modules(
-					pkg.Module,
-					webserver.Module,
-					dnsserver.Module,
-				).
-				Run()
-		})
-	})
+	app := goppy.New()
+	app.Plugins(
+		web.WithHTTP(),
+		database.WithMySQL(),
+	)
+	app.Plugins(cache.Plugins...)
+	app.Plugins(rules.Plugins...)
+	app.Plugins(
+		db.Plugin,
+		httpcli.Plugin,
+		resolver.Plugin,
+		dns.Plugin,
+		dnscli.Plugin,
+	)
+	app.Run()
 }

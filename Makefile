@@ -1,42 +1,42 @@
-SHELL=/bin/bash
 
-.PHONY: run_back run_front
-run_back:
-	go generate ./...
-	go run -race cmd/fdns/main.go run -config=./configs/config.dev.yaml
-run_front:
-	cd web && npm ci --no-delete --cache=/tmp && npm run start
+.PHONY: install
+install:
+	go install github.com/osspkg/devtool@latest
 
-.PHONY: build_back build_font
-build_back:
-	bash scripts/build.sh amd64
-build_font:
-	bash scripts/build.sh front
+.PHONY: setup
+setup:
+	devtool setup-lib
 
-.PHONY: linter
-linter:
-	bash scripts/linter.sh
+.PHONY: lint
+lint:
+	devtool lint
+
+.PHONY: license
+license:
+	devtool license
+
+.PHONY: build
+build:
+	devtool build --arch=amd64
 
 .PHONY: tests
 tests:
-	bash scripts/tests.sh
+	devtool test
 
-.PHONY: develop_up develop_down
-develop_up:
-	bash scripts/docker.sh docker_up
-develop_down:
-	bash scripts/docker.sh docker_down
+.PHONY: pre-commite
+pre-commite: setup lint build tests
 
 .PHONY: ci
-ci:
-	bash scripts/ci.sh
+ci: install setup lint build tests
 
-deb: build_font
-	deb-builder build
+run_back:
+	go run cmd/fdns/main.go --config=config/config.dev.yaml
 
 nslookup:
 	nslookup -port=8053 google.com 127.0.0.1
+	nslookup -port=8053 adstop.org 127.0.0.1
 	nslookup -port=8053 yandex.ru 127.0.0.1
 	nslookup -port=8053 vk.com 127.0.0.1
 	nslookup -port=8053 dewep.pro 127.0.0.1
 	nslookup -port=8053 dewep.online 127.0.0.1
+	nslookup -port=8053 googleads.github.io 127.0.0.1
