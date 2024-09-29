@@ -18,8 +18,10 @@ import (
 	"go.osspkg.com/goppy/v2/xdns"
 )
 
+var Version = "v0.0.0-dev"
+
 func main() {
-	app := goppy.New("fdns", "v0.0.0-dev", "filter dns")
+	app := goppy.New("fDNS", Version, "filter dns")
 	app.Plugins(
 		web.WithServer(),
 		web.WithClient(),
