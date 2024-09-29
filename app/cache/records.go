@@ -1,102 +1,56 @@
+/*
+ *  Copyright (c) 2020-2024 Mikhail Knyazhev <markus621@yandex.com>. All rights reserved.
+ *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
+ */
+
 package cache
 
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/osspkg/go-sdk/app"
-	"github.com/osspkg/go-sdk/routine"
+	"go.osspkg.com/ioutils/cache"
 )
 
 type Record struct {
-	values []string
-	ttl    uint32
+	Value []string
+	TTL   uint32
 }
-
-func (v Record) Values() []string {
-	return v.values
-}
-
-func (v Record) Ttl() uint32 {
-	return v.ttl
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type Records struct {
-	data map[string]Record
-	mux  sync.RWMutex
+	data cache.TCacheTTL[string, *Record]
 }
 
-func NewRecords() *Records {
+func NewRecords(ctx context.Context) *Records {
 	return &Records{
-		data: make(map[string]Record, 1000),
+		data: cache.NewWithTTL[string, *Record](ctx, 15*time.Minute),
 	}
 }
 
-func (v *Records) Up(ctx app.Context) error {
-	routine.Interval(ctx.Context(), time.Minute*15, func(ctx context.Context) {
-		v.mux.Lock()
-		defer v.mux.Unlock()
-
-		currTime := uint32(time.Now().Unix())
-		for name, record := range v.data {
-			if record.ttl != 0 && record.ttl <= currTime {
-				delete(v.data, name)
-			}
-		}
-	})
-	return nil
+func (v *Records) key(qtype uint16, name string) string {
+	return fmt.Sprintf("%d %s", qtype, name)
 }
 
-func (v *Records) Down() error {
-	return nil
+func (v *Records) Set(qtype uint16, name string, ttl uint32, values ...string) {
+	v.data.SetWithTTL(
+		v.key(qtype, name),
+		&Record{
+			Value: nil,
+			TTL:   ttl,
+		},
+		time.Unix(int64(ttl), 0),
+	)
 }
 
-func (v *Records) Clean() {
-	v.mux.Lock()
-	defer v.mux.Unlock()
-
-	v.data = make(map[string]Record, 1000)
+func (v *Records) Has(qtype uint16, name string) bool {
+	return v.data.Has(v.key(qtype, name))
 }
 
-func (v *Records) ckey(rrtype uint16, name string) string {
-	return fmt.Sprintf("%s:%d", name, rrtype)
+func (v *Records) Get(qtype uint16, name string) (*Record, bool) {
+	return v.data.Get(v.key(qtype, name))
 }
 
-func (v *Records) Set(rrtype uint16, name string, ttl uint32, values ...string) {
-	v.mux.Lock()
-	defer v.mux.Unlock()
-
-	v.data[v.ckey(rrtype, name)] = Record{
-		values: values,
-		ttl:    ttl,
-	}
-}
-
-//func (v *Records) Has(rrtype uint16, name string) bool {
-//	v.mux.RLock()
-//	defer v.mux.RUnlock()
-//
-//	_, ok := v.data[v.ckey(rrtype, name)]
-//	return ok
-//}
-
-func (v *Records) Get(rrtype uint16, name string) *Record {
-	v.mux.RLock()
-	defer v.mux.RUnlock()
-
-	if vv, ok := v.data[v.ckey(rrtype, name)]; ok {
-		return &vv
-	}
-	return nil
-}
-
-func (v *Records) Del(rrtype uint16, name string) {
-	v.mux.Lock()
-	defer v.mux.Unlock()
-
-	delete(v.data, v.ckey(rrtype, name))
+func (v *Records) Del(qtype uint16, name string) {
+	v.data.Del(v.key(qtype, name))
 }

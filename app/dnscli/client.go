@@ -1,114 +1,104 @@
+/*
+ *  Copyright (c) 2020-2024 Mikhail Knyazhev <markus621@yandex.com>. All rights reserved.
+ *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
+ */
+
 package dnscli
 
 import (
 	"context"
 	"encoding/json"
-	"strings"
-	"sync"
 	"time"
-
-	"github.com/osspkg/fdns/app/ips"
-
-	"github.com/osspkg/fdns/app/utils"
-
-	"github.com/osspkg/go-sdk/errors"
-
-	"github.com/osspkg/fdns/app/domain"
 
 	"github.com/miekg/dns"
 	"github.com/osspkg/fdns/app/db"
-	"github.com/osspkg/go-sdk/app"
-	"github.com/osspkg/go-sdk/log"
-	"github.com/osspkg/go-sdk/orm"
-	"github.com/osspkg/go-sdk/routine"
+	"go.osspkg.com/goppy/v2/orm"
+	"go.osspkg.com/goppy/v2/xdns"
+	"go.osspkg.com/logx"
+	"go.osspkg.com/network/address"
+	"go.osspkg.com/random"
+	"go.osspkg.com/routine"
+	"go.osspkg.com/syncing"
+	"go.osspkg.com/validate"
+	"go.osspkg.com/xc"
 )
 
 type (
 	Rules struct {
-		data map[string]map[string]struct{}
-	}
-	RulesGetter interface {
-		Get(domain string) []string
+		data map[string][]string
 	}
 )
 
 func NewRules() *Rules {
-	return &Rules{data: make(map[string]map[string]struct{}, 100)}
+	return &Rules{
+		data: make(map[string][]string, 100),
+	}
 }
 
 func (v *Rules) Set(zone string, ips []string) {
 	_, ok := v.data[zone]
 	if !ok {
-		v.data[zone] = make(map[string]struct{}, 2)
+		v.data[zone] = make([]string, 0, 2)
 	}
 
-	for _, ip := range ips {
-		v.data[zone][ip] = struct{}{}
-	}
+	v.data[zone] = append(v.data[zone], ips...)
 }
 
-func (v *Rules) Get(zone string) []string {
+func (v *Rules) Resolve(zone string) (result []string) {
 	for i := 2; i >= 0; i-- {
-		vv := domain.Level(zone, i)
-		if data, ok := v.data[vv]; ok {
-			result := make([]string, 0, len(data))
-			for ip := range data {
-				result = append(result, ip)
-			}
-			return utils.Shuffle(result)
+		vv := validate.GetDomainLevel(zone, i)
+		if ips, ok := v.data[vv]; ok {
+			result = append(result, ips...)
+			return random.Shuffle(result)
 		}
 	}
-	return nil
+	return
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-var (
-	ttlUpdate = 15 * time.Minute
-)
+// --------------------------------------------------------------------------------------------------------------------
 
 type (
-	Client interface {
-		ForceUpdate(ctx context.Context) error
-		Exchange(question dns.Question) ([]dns.RR, bool)
-		ExchangeCustom(question dns.Question, adders []string) ([]dns.RR, bool)
-	}
-	object struct {
-		rules RulesGetter
-		cli   *dns.Client
-		db    db.Connect
-		mux   sync.RWMutex
+	Client struct {
+		ns  *Rules
+		cli *xdns.Client
+		db  db.Connect
+		mux syncing.Lock
 	}
 )
 
-func NewClient(dbc db.Connect) *object {
-	return &object{
-		cli: &dns.Client{
-			Net:          "",
-			ReadTimeout:  time.Second * 3,
-			WriteTimeout: time.Second * 3,
-		},
-		rules: NewRules(),
-		db:    dbc,
+func NewClient(dbc db.Connect, cli *xdns.Client) *Client {
+	c := &Client{
+		cli: cli,
+		ns:  NewRules(),
+		db:  dbc,
+		mux: syncing.NewLock(),
 	}
+
+	c.cli.SetZoneResolver(c.ns)
+
+	return c
 }
 
-func (v *object) Up(ctx app.Context) error {
-	routine.Interval(ctx.Context(), ttlUpdate, func(ctx context.Context) {
-		if err := v.ForceUpdate(ctx); err != nil {
-			log.WithError("err", err).Errorf("DNS Client update dns list")
-		}
-	})
+func (v *Client) Up(ctx xc.Context) error {
+	routine.Interval(
+		ctx.Context(),
+		15*time.Minute,
+		func(ctx context.Context) {
+			if err := v.ForceUpdate(ctx); err != nil {
+				logx.Error("DNS Client update dns list", "err", err)
+			}
+		},
+	)
 	return nil
 }
 
-func (v *object) Down() error {
+func (v *Client) Down() error {
 	return nil
 }
 
-func (v *object) ForceUpdate(ctx context.Context) error {
-	result := NewRules()
-	err := v.db.QueryContext("", ctx, func(q orm.Querier) {
+func (v *Client) ForceUpdate(ctx context.Context) error {
+	ns := NewRules()
+	err := v.db.Main().Query(ctx, "load_ns_zone", func(q orm.Querier) {
 		q.SQL("SELECT `zone`,`data` FROM `dns`;")
 		q.Bind(func(bind orm.Scanner) error {
 			var (
@@ -122,59 +112,19 @@ func (v *object) ForceUpdate(ctx context.Context) error {
 			if err := json.Unmarshal(b, &data); err != nil {
 				return err
 			}
-			result.Set(zone, ips.NormalizeDNS(data...))
+			ns.Set(zone, address.Normalize("53", data...))
 			return nil
 		})
 	})
 	if err != nil {
 		return err
 	}
-	v.mux.Lock()
-	v.rules = result
-	v.mux.Unlock()
+	v.mux.Lock(func() {
+		v.ns = ns
+	})
 	return nil
 }
 
-func (v *object) Exchange(question dns.Question) ([]dns.RR, bool) {
-	return v.ExchangeCustom(question, v.rules.Get(question.Name))
-}
-
-func (v *object) ExchangeCustom(question dns.Question, adders []string) ([]dns.RR, bool) {
-	var (
-		mr   []string
-		errs error
-	)
-
-	msg := new(dns.Msg).SetQuestion(question.Name, question.Qtype)
-
-	for _, ns := range adders {
-		resp, _, err := v.cli.Exchange(msg, ns)
-		if err != nil {
-			errs = errors.Wrap(errs, err)
-			continue
-		}
-
-		for _, a := range resp.Answer {
-			mr = append(mr, a.String())
-
-		}
-
-		log.WithFields(log.Fields{
-			"dns":      ns,
-			"question": question.String(),
-			"answer":   strings.Join(mr, ","),
-		}).Infof("DNS Client exchange")
-
-		return resp.Answer, len(resp.Answer) > 0
-	}
-
-	if errs != nil {
-		log.WithFields(log.Fields{
-			"dns":      strings.Join(adders, ","),
-			"question": question.String(),
-			"err":      errs.Error(),
-		}).Errorf("DNS Client exchange")
-	}
-
-	return nil, false
+func (v *Client) Exchange(question dns.Question) ([]dns.RR, error) {
+	return v.cli.Exchange(question)
 }

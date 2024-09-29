@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  db:
+  fdns-db:
     image: mysql:8.0.33-debian
     container_name: fdns-db
     restart: always
@@ -18,11 +18,11 @@ services:
       timeout: 30s
       retries: 30
 
-  adminer:
+  fdns-adminer:
     image: adminer:latest
     container_name: fdns-adminer
     restart: always
     depends_on:
-      - db
+      - fdns-db
     ports:
       - "127.0.0.1:8090:8080"

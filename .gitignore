@@ -7,14 +7,25 @@
 *.lock
 *.log
 *.sqlite
+*.exe~
+*.db
+*.db-journal
+*.mmdb
+.env
 
-.DS_Store
-.glide
-.idea
-.vscode
-.tools
-/vendor
+
+
 
 .angulardoc.json
-.angular
+coverage.txt
+coverage.out
+
+.angular/
+.tools/
+.idea/
+.vscode/
+
 build/
+bin/
+vendor/
+

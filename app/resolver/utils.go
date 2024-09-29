@@ -1,3 +1,8 @@
+/*
+ *  Copyright (c) 2020-2024 Mikhail Knyazhev <markus621@yandex.com>. All rights reserved.
+ *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
+ */
+
 package resolver
 
 import (
@@ -10,10 +15,10 @@ const (
 	DefaultTTL = 3600
 )
 
-func CreateRR(rrtype uint16, name string, ttl uint32, values ...string) []dns.RR {
+func CreateRR(qtype uint16, name string, ttl uint32, values ...string) []dns.RR {
 	result := make([]dns.RR, 0, len(values))
 	for _, value := range values {
-		switch rrtype {
+		switch qtype {
 		case dns.TypeA:
 			result = append(result, &dns.A{
 				Hdr: dns.RR_Header{
